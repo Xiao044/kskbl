@@ -1,5 +1,6 @@
 <template>
-  <div class="app">
+  <LoginView v-if="!isLoggedIn" @login-success="onLoginSuccess" />
+  <div v-else class="app">
 
     <div class="sidebar">
       <h2 class="logo">Net Monitor</h2>
@@ -40,6 +41,7 @@
 </template>
 
 <script>
+import LoginView from './components/LoginView.vue'
 import Dashboard from './components/Dashboard.vue'
 import Realtime from './components/Realtime.vue'
 import History from './components/History.vue'
@@ -50,6 +52,7 @@ import Chat from './components/Chat.vue'
 export default {
   name: 'App',
   components: {
+    LoginView,
     dashboard: Dashboard,
     realtime: Realtime,
     history: History,
@@ -60,11 +63,12 @@ export default {
 
   data() {
     return {
-      current: 'alert', // 默认展示告警页，方便你看后端引擎的效果
+      isLoggedIn: false,
+      current: 'alert',
       nowTime: '',
       flow: [],
       history: [],
-      globalAlerts: [], // 🌟 全局告警缓冲池
+      globalAlerts: [],
       ws: null,
       menu: [
         { key: 'dashboard', label: '📊 数据总览' },
@@ -94,7 +98,21 @@ export default {
     }
   },
 
+  watch: {
+    isLoggedIn(val) {
+      if (val) {
+        this.connectWS()
+        this.updateTime()
+        setInterval(this.updateTime, 1000)
+      }
+    }
+  },
+
   methods: {
+    onLoginSuccess() {
+      this.isLoggedIn = true
+    },
+
     switchPage(key) {
       this.current = key
     },
@@ -103,13 +121,11 @@ export default {
       this.ws = new WebSocket("ws://localhost:8000/ws/flow")
 
       this.ws.onmessage = (event) => {
-        // 🌟 核心修复点：正确解析新版后端发来的复合对象 (Object)
         const payload = JSON.parse(event.data);
-        
-        // 1. 处理流量数据 (确保它是数组才遍历)
+
         if (payload.flow && Array.isArray(payload.flow)) {
           this.flow = payload.flow;
-          
+
           payload.flow.forEach(item => {
             this.history.unshift({
               ...item,
@@ -124,10 +140,8 @@ export default {
           this.flow = [];
         }
 
-        // 2. 接收并处理后端的告警数据
         if (payload.alerts && Array.isArray(payload.alerts) && payload.alerts.length > 0) {
           this.globalAlerts.push(...payload.alerts);
-          // 保持告警池最多存储 100 条记录
           if (this.globalAlerts.length > 100) {
             this.globalAlerts = this.globalAlerts.slice(-100);
           }
@@ -144,12 +158,6 @@ export default {
     updateTime() {
       this.nowTime = new Date().toLocaleString()
     }
-  },
-
-  mounted() {
-    this.connectWS()
-    this.updateTime()
-    setInterval(this.updateTime, 1000)
   },
 
   beforeUnmount() {
