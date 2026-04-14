@@ -52,6 +52,9 @@
             <span class="menu-label">探针状态：已授权</span>
           </div>
         </div>
+
+        <!-- Orange mascot — only visible when sidebar is expanded -->
+        <ChatMascotHandle :is-collapsed="isCollapsed" @open-chat="isChatOpen = true" />
       </aside>
 
       <main class="main-wrapper">
@@ -66,19 +69,29 @@
         <div class="content-body">
           <div class="view-container">
             <keep-alive>
-              <component 
-                :is="currentView" 
-                :flow="currentFlow" 
-                :alerts="alerts" 
+              <component
+                :is="currentView"
+                :flow="currentFlow"
+                :alerts="alerts"
               />
             </keep-alive>
           </div>
-
-          <div class="ai-sidebar">
-            <Chat />
-          </div>
         </div>
       </main>
+
+      <!-- Floating AI Chat Drawer -->
+      <transition name="drawer-backdrop">
+        <div v-if="isChatOpen" class="chat-drawer-backdrop" @click="isChatOpen = false"></div>
+      </transition>
+      <div class="chat-drawer" :class="{ 'is-open': isChatOpen }">
+        <!-- Clay capsule pull handle -->
+        <div class="drawer-handle" @click="isChatOpen = !isChatOpen" :title="isChatOpen ? '收起面板' : '展开 AI 面板'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+        </div>
+        <div class="chat-drawer__panel">
+          <Chat />
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -92,15 +105,17 @@ import Rank from './components/Rank.vue'
 import History from './components/History.vue' // 补全导入
 import Alert from './components/Alert.vue'
 import Chat from './components/Chat.vue'
+import ChatMascotHandle from './components/ChatMascotHandle.vue'
 
 export default {
   name: 'App',
   // 完整注册所有组件
-  components: { LoginView, Dashboard, Realtime, Rank, History, Alert, Chat },
+  components: { LoginView, Dashboard, Realtime, Rank, History, Alert, Chat, ChatMascotHandle },
   data() {
     return {
       isLoggedIn: !!localStorage.getItem('token'),
       isCollapsed: false,
+      isChatOpen: false,
       currentView: 'Dashboard',
       ws: null,
       currentFlow: [],
@@ -130,6 +145,14 @@ export default {
     setInterval(() => {
       this.currentTime = new Date().toLocaleTimeString();
     }, 1000);
+    // ESC 关闭抽屉
+    this._escHandler = (e) => {
+      if (e.key === 'Escape' && this.isChatOpen) this.isChatOpen = false;
+    };
+    window.addEventListener('keydown', this._escHandler);
+  },
+  beforeUnmount() {
+    window.removeEventListener('keydown', this._escHandler);
   },
   methods: {
     handleLoginSuccess() {
@@ -322,9 +345,83 @@ html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidde
 .time-now { color: var(--clay-text-muted); font-size: 13px; margin-right: 16px; font-family: var(--clay-mono); }
 .user-chip { background: rgba(218, 212, 200, 0.25); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--clay-ube); border: 1px solid var(--glass-border); }
 
-.content-body { flex: 1; display: flex; gap: 16px; overflow: hidden; }
+.content-body { flex: 1; display: flex; overflow: hidden; }
 .view-container { flex: 1; min-width: 0; }
-.ai-sidebar { width: 380px; flex-shrink: 0; }
+
+/* ===== Floating AI Chat Drawer ===== */
+.chat-drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+.drawer-backdrop-enter-active { transition: opacity 0.35s ease; }
+.drawer-backdrop-leave-active { transition: opacity 0.25s ease; }
+.drawer-backdrop-enter-from,
+.drawer-backdrop-leave-to { opacity: 0; }
+
+.chat-drawer {
+  position: fixed;
+  top: 24px;
+  right: 24px;
+  bottom: 24px;
+  width: 400px;
+  z-index: 100;
+  transform: translateX(calc(100% + 30px));
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.chat-drawer.is-open {
+  transform: translateX(0);
+}
+
+/* Clay capsule pull handle — sits on left edge of drawer */
+.drawer-handle {
+  position: absolute;
+  left: -22px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 72px;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--glass-border);
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: var(--clay-text-muted);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.drawer-handle:hover {
+  background: var(--clay-ube-bg);
+  color: var(--clay-ube);
+  width: 26px;
+  left: -26px;
+  box-shadow: -6px 0 20px rgba(67, 8, 159, 0.1);
+}
+
+.chat-drawer__panel {
+  width: 100%;
+  height: 100%;
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-radius: 24px;
+  border: 1px solid var(--glass-border);
+  box-shadow:
+    var(--glass-shadow),
+    -8px 0 32px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+.chat-drawer__panel > * {
+  height: 100%;
+}
 
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
 .dot.safe { background: var(--clay-matcha); box-shadow: 0 0 8px rgba(7,138,82,0.4); }
