@@ -134,7 +134,7 @@ export default {
           label: { show: false },
           data: []
         }],
-        color: ['#6366f1', '#8b5cf6', '#a855f7', '#d946ef', '#ec4899', '#f43f5e', '#f97316', '#eab308', '#22c55e', '#06b6d4']
+        color: ['#078a52', '#3bd3fd', '#fbbd41', '#43089f', '#fc7981', '#01418d', '#84e7a5', '#c1b0ff', '#f8cc65', '#0089ad']
       });
 
       this.barInstance.setOption({
@@ -144,7 +144,7 @@ export default {
         xAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed' } } },
         yAxis: { type: 'category', data: [], axisLine: { show: false }, axisTick: { show: false } },
         series: [{
-          type: 'bar', data: [], itemStyle: { borderRadius: [0, 4, 4, 0], color: '#6366f1' },
+          type: 'bar', data: [], itemStyle: { borderRadius: [0, 6, 6, 0], color: '#43089f' },
           barWidth: '60%'
         }]
       });
@@ -186,33 +186,35 @@ export default {
 .rank-inner-container { display: flex; flex-direction: column; gap: 24px; height: 100%; box-sizing: border-box; }
 
 .top-row { display: flex; gap: 24px; height: 320px; }
-.chart-box { flex: 1; background: #ffffff; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; }
-.box-title { font-size: 16px; font-weight: 700; color: #1e293b; margin: 0 0 16px 0; }
+.chart-box { flex: 1; background: #ffffff; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; border: 1px solid var(--clay-border, #dad4c8); box-shadow: var(--clay-shadow, rgba(0,0,0,0.1) 0px 1px 1px, rgba(0,0,0,0.04) 0px -1px 1px inset, rgba(0,0,0,0.05) 0px -0.5px 1px); }
+.box-title { font-size: 16px; font-weight: 600; color: #000000; margin: 0 0 16px 0; letter-spacing: -0.32px; }
 .echarts-container { flex: 1; width: 100%; }
 
 .bottom-row { flex: 1; min-height: 0; }
-.table-card { background: #ffffff; border-radius: 20px; padding: 24px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+.table-card { background: #ffffff; border-radius: 24px; padding: 24px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; border: 1px solid var(--clay-border, #dad4c8); box-shadow: var(--clay-shadow, rgba(0,0,0,0.1) 0px 1px 1px, rgba(0,0,0,0.04) 0px -1px 1px inset, rgba(0,0,0,0.05) 0px -0.5px 1px); }
 
 .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.refresh-btn { padding: 8px 16px; background: #f1f5f9; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s; }
-.refresh-btn:hover { background: #e2e8f0; color: #1e293b; }
+/* Clay 标志性 Hover 按钮 */
+.refresh-btn { padding: 8px 16px; background: #ffffff; border: 1px solid var(--clay-border, #dad4c8); border-radius: 12px; font-size: 13px; font-weight: 600; color: #000000; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); font-family: var(--clay-font, 'Roobert', 'Arial', sans-serif); }
+.refresh-btn:hover { transform: rotateZ(-8deg) translateY(-2px); box-shadow: rgb(0,0,0) -7px 7px; background-color: var(--clay-lemon, #fbbd41); color: #ffffff; border-color: var(--clay-lemon, #fbbd41); }
+.refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background: #ffffff; color: var(--clay-text-muted, #9f9b93); }
 
 .table-wrapper { flex: 1; overflow-y: auto; }
 table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 12px 16px; font-size: 13px; color: #64748b; font-weight: 600; border-bottom: 1px solid #f1f5f9; position: sticky; top: 0; background: #fff; z-index: 1; }
-td { padding: 16px; border-bottom: 1px solid #f8fafc; font-size: 14px; vertical-align: middle; }
+th { text-align: left; padding: 12px 16px; font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; background: #fff; z-index: 1; }
+td { padding: 16px; border-bottom: 1px solid var(--clay-border-light, #eee9df); font-size: 14px; vertical-align: middle; }
 
-.rank-num { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: #f1f5f9; border-radius: 6px; font-size: 12px; font-weight: 700; color: #64748b; }
-.rank-num.top-three { background: #6366f1; color: #fff; }
+.rank-num { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--clay-bg, #faf9f7); border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--clay-text-secondary, #55534e); border: 1px solid var(--clay-border, #dad4c8); }
+.rank-num.top-three { background: var(--clay-ube-light, #c1b0ff); color: var(--clay-ube, #43089f); border-color: var(--clay-ube-light, #c1b0ff); }
 
-.ip-text { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #1e293b; }
-.proto-tag { display: inline-block; padding: 2px 8px; background: #eff6ff; color: #3b82f6; border-radius: 4px; font-size: 11px; font-weight: 600; margin-right: 4px; }
+.ip-text { font-family: 'Space Mono', monospace; font-weight: 600; color: #000000; }
+.proto-tag { display: inline-block; padding: 2px 8px; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border-radius: 999px; font-size: 11px; font-weight: 600; margin-right: 4px; border: 1px solid var(--clay-border-light, #eee9df); }
 
-.progress-container { width: 100%; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
-.progress-bar { height: 100%; background: linear-gradient(90deg, #6366f1, #a855f7); transition: width 0.5s ease; }
+.progress-container { width: 100%; height: 8px; background: var(--clay-border-light, #eee9df); border-radius: 4px; overflow: hidden; }
+.progress-bar { height: 100%; background: linear-gradient(90deg, var(--clay-ube, #43089f), var(--clay-ube-light, #c1b0ff)); transition: width 0.5s ease; }
 
-.data-text { font-family: 'JetBrains Mono', monospace; color: #64748b; font-size: 13px; }
+.data-text { font-family: 'Space Mono', monospace; color: var(--clay-text-secondary, #55534e); font-size: 13px; }
 
-.empty-state { padding: 60px; text-align: center; color: #94a3b8; }
+.empty-state { padding: 60px; text-align: center; color: var(--clay-text-muted, #9f9b93); }
 .empty-icon { font-size: 48px; margin-bottom: 16px; }
 </style>

@@ -116,11 +116,11 @@ export default {
         yAxis: { type: 'value', min: 0, axisLabel: { color: '#737373' }, splitLine: { lineStyle: { color: '#f4f4f5', type: 'dashed' } } },
         series: [{
           name: '吞吐量 (Mbps)', type: 'line', smooth: true, symbol: 'none',
-          lineStyle: { color: '#6d28d9', width: 3 }, // 深紫色主线
+          lineStyle: { color: '#43089f', width: 3 }, // Ube 深紫主线
           areaStyle: {
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              { offset: 0, color: 'rgba(109, 40, 217, 0.2)' },
-              { offset: 1, color: 'rgba(109, 40, 217, 0)' }
+              { offset: 0, color: 'rgba(67, 8, 159, 0.2)' },
+              { offset: 1, color: 'rgba(67, 8, 159, 0)' }
             ])
           },
           data: []
@@ -137,8 +137,8 @@ export default {
           label: { color: '#52525b', fontWeight: 600, formatter: '{b}\n{d}%' },
           data: []
         }],
-        // 使用高级中性色与点缀色搭配
-        color: ['#171717', '#6d28d9', '#eab308', '#f97316', '#a1a1aa', '#e4e4e7']
+        // Clay 色板：Matcha, Slushie, Lemon, Ube, Pomegranate, Blueberry
+        color: ['#078a52', '#3bd3fd', '#fbbd41', '#43089f', '#fc7981', '#01418d']
       });
     },
     updateTrendData() {
@@ -163,33 +163,33 @@ export default {
 <style scoped>
 .dashboard-inner-container { display: flex; flex-direction: column; gap: 24px; height: 100%; box-sizing: border-box; }
 
-/* 顶部卡片网格 */
+/* 顶部卡片网格 — Clay 风格 */
 .kpi-grid { display: flex; gap: 24px; flex-shrink: 0; }
-.kpi-card { flex: 1; background: #ffffff; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; height: 140px; box-sizing: border-box; }
+.kpi-card { flex: 1; background: #ffffff; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; justify-content: space-between; height: 140px; box-sizing: border-box; border: 1px solid var(--clay-border, #dad4c8); box-shadow: var(--clay-shadow, rgba(0,0,0,0.1) 0px 1px 1px, rgba(0,0,0,0.04) 0px -1px 1px inset, rgba(0,0,0,0.05) 0px -0.5px 1px); }
 
 .kpi-header { display: flex; justify-content: space-between; align-items: flex-start; }
-.kpi-title { font-size: 14px; color: #737373; font-weight: 600; }
+.kpi-title { font-size: 14px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; }
 .icon-wrapper { width: 32px; height: 32px; border-radius: 8px; display: flex; justify-content: center; align-items: center; }
-.icon-wrapper.dark { background: #f4f4f5; color: #171717; }
-.icon-wrapper.danger { background: #fef2f2; color: #dc2626; }
-.icon-wrapper.warning { background: #fef3c7; color: #d97706; }
-.icon-wrapper.purple { background: #f3e8ff; color: #6d28d9; }
+.icon-wrapper.dark { background: #f4f4f5; color: #000000; }
+.icon-wrapper.danger { background: #fef2f2; color: var(--clay-pomegranate, #fc7981); }
+.icon-wrapper.warning { background: #fef3c7; color: var(--clay-lemon, #fbbd41); }
+.icon-wrapper.purple { background: #f3e8ff; color: var(--clay-ube, #43089f); }
 
 .kpi-body { margin-top: auto; }
-.kpi-value { margin: 0 0 8px 0; font-size: 32px; font-weight: 800; color: #171717; font-family: 'Inter', sans-serif; line-height: 1; }
-.kpi-value.text-danger { color: #dc2626; }
-.kpi-value.text-purple { color: #6d28d9; }
-.unit { font-size: 14px; color: #a1a1aa; font-weight: 500; }
+.kpi-value { margin: 0 0 8px 0; font-size: 32px; font-weight: 800; color: #000000; font-family: var(--clay-font, 'Roobert', 'Arial', sans-serif); line-height: 1; }
+.kpi-value.text-danger { color: var(--clay-pomegranate, #fc7981); }
+.kpi-value.text-purple { color: var(--clay-ube, #43089f); }
+.unit { font-size: 14px; color: var(--clay-text-muted, #9f9b93); font-weight: 500; }
 
-.kpi-status { font-size: 12px; color: #737373; display: flex; align-items: center; gap: 6px; font-weight: 500; }
-.danger-text { color: #dc2626; }
-.warning-text { color: #d97706; }
+.kpi-status { font-size: 12px; color: var(--clay-text-muted, #9f9b93); display: flex; align-items: center; gap: 6px; font-weight: 500; }
+.danger-text { color: var(--clay-pomegranate, #fc7981); }
+.warning-text { color: var(--clay-lemon, #d08a11); }
 .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
-.dot.safe { background: #16a34a; }
+.dot.safe { background: var(--clay-matcha, #078a52); }
 
-/* 图表布局 */
+/* 图表布局 — Clay 卡片 */
 .charts-layout { flex: 1; display: flex; gap: 24px; min-height: 0; }
-.chart-card { background: #ffffff; border-radius: 20px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; }
+.chart-card { background: #ffffff; border-radius: 24px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; border: 1px solid var(--clay-border, #dad4c8); box-shadow: var(--clay-shadow, rgba(0,0,0,0.1) 0px 1px 1px, rgba(0,0,0,0.04) 0px -1px 1px inset, rgba(0,0,0,0.05) 0px -0.5px 1px); }
 .flex-7 { flex: 7; }
 .flex-3 { flex: 3; }
 .echarts-inner { width: 100%; height: 100%; flex: 1; }

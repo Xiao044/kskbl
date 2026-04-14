@@ -95,14 +95,14 @@ export default {
         grid: { left: '0%', right: '0%', bottom: '0%', top: '20%', containLabel: true },
         xAxis: [{ type: 'category', data: [], axisLabel: { color: '#737373', fontSize: 11 }, axisLine: { show: false }, axisTick: { show: false } }],
         yAxis: [{ type: 'value', axisLabel: { color: '#a1a1aa' }, splitLine: { lineStyle: { color: '#f4f4f5', type: 'dashed' } } }],
-        series: [{ 
+        series: [{
           name: '瞬时流量', type: 'bar', barWidth: '35%',
-          itemStyle: { 
-            borderRadius: [4, 4, 0, 0],
+          itemStyle: {
+            borderRadius: [6, 6, 0, 0],
             color: new echarts.graphic.LinearGradient(0, 0, 0, 1, [
-              {offset: 0, color: '#171717'}, 
-              {offset: 1, color: '#6d28d9'}
-            ]) 
+              {offset: 0, color: '#43089f'},
+              {offset: 1, color: '#c1b0ff'}
+            ])
           }, 
           data: [] 
         }]
@@ -118,7 +118,7 @@ export default {
           label: { color: '#52525b', fontWeight: 600 }, 
           data: [] 
         }],
-        color: ['#171717', '#6d28d9', '#eab308', '#f97316', '#a1a1aa', '#e4e4e7']
+        color: ['#078a52', '#3bd3fd', '#fbbd41', '#43089f', '#fc7981', '#01418d']
       });
     },
     updateTrendChart(data) {
@@ -146,10 +146,10 @@ export default {
 <style scoped>
 .realtime-inner-container { display: flex; flex-direction: column; gap: 24px; height: 100%; box-sizing: border-box; }
 
-.content-card { background: #ffffff; border-radius: 20px; padding: 24px; display: flex; flex-direction: column; }
+.content-card { background: #ffffff; border-radius: 24px; padding: 24px; display: flex; flex-direction: column; border: 1px solid var(--clay-border, #dad4c8); box-shadow: var(--clay-shadow, rgba(0,0,0,0.1) 0px 1px 1px, rgba(0,0,0,0.04) 0px -1px 1px inset, rgba(0,0,0,0.05) 0px -0.5px 1px); }
 .card-header { margin-bottom: 20px; }
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
-.section-title { margin: 0; color: #171717; font-size: 18px; font-weight: 700; }
+.section-title { margin: 0; color: #000000; font-size: 18px; font-weight: 600; letter-spacing: -0.36px; }
 
 /* 顶部图表区 */
 .charts-row { display: flex; gap: 24px; height: 320px; flex-shrink: 0; }
@@ -159,34 +159,34 @@ export default {
 /* 底部表格区 */
 .table-card { flex: 1; overflow: hidden; }
 
-/* Live 呼吸灯徽章 */
-.live-pill { display: flex; align-items: center; gap: 8px; background: #fef2f2; color: #dc2626; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; font-family: 'Inter', sans-serif; }
-.pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: #dc2626; animation: pulse 1.5s infinite; }
-@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(220, 38, 38, 0); } 100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); } }
+/* Live 呼吸灯徽章 — Clay 化 */
+.live-pill { display: flex; align-items: center; gap: 8px; background: #fef2f2; color: var(--clay-pomegranate, #fc7981); padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700; font-family: var(--clay-font, 'Roobert', 'Arial', sans-serif); }
+.pulse-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--clay-pomegranate, #fc7981); animation: pulse 1.5s infinite; }
+@keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(252, 121, 129, 0.4); } 70% { box-shadow: 0 0 0 6px rgba(252, 121, 129, 0); } 100% { box-shadow: 0 0 0 0 rgba(252, 121, 129, 0); } }
 
 /* 表格主体 */
 .table-scroll-area { flex: 1; overflow-y: auto; }
 .table-scroll-area::-webkit-scrollbar { width: 4px; }
-.table-scroll-area::-webkit-scrollbar-thumb { background: #d4d4d8; border-radius: 4px; }
+.table-scroll-area::-webkit-scrollbar-thumb { background: var(--clay-border, #dad4c8); border-radius: 4px; }
 
 table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 14px 16px; color: #737373; font-size: 13px; font-weight: 600; border-bottom: 2px solid #e5e7eb; position: sticky; top: 0; background: #ffffff; z-index: 10; }
-td { padding: 16px; font-size: 14px; border-bottom: 1px solid #f4f4f5; color: #27272a; }
-tr:hover td { background: #fafafa; }
+th { text-align: left; padding: 14px 16px; color: var(--clay-text-muted, #9f9b93); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; background: #ffffff; z-index: 10; }
+td { padding: 16px; font-size: 14px; border-bottom: 1px solid var(--clay-border-light, #eee9df); color: #000000; }
+tr:hover td { background: var(--clay-bg, #faf9f7); }
 
-.ip-src { color: #6d28d9; font-family: 'Courier New', monospace; font-weight: 700; }
-.ip-dst { display: flex; align-items: center; gap: 8px; font-family: 'Courier New', monospace; color: #52525b; }
+.ip-src { color: var(--clay-ube, #43089f); font-family: 'Space Mono', monospace; font-weight: 700; }
+.ip-dst { display: flex; align-items: center; gap: 8px; font-family: 'Space Mono', monospace; color: var(--clay-text-secondary, #55534e); }
 
 .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-.safe { background-color: #16a34a; }
-.warn { background-color: #d97706; }
+.safe { background-color: var(--clay-matcha, #078a52); }
+.warn { background-color: var(--clay-lemon, #fbbd41); }
 
-.bytes-text { font-weight: 700; color: #171717; }
-.packets-text { color: #52525b; }
-.unit { font-size: 12px; color: #a1a1aa; }
+.bytes-text { font-weight: 700; color: #000000; font-family: 'Space Mono', monospace; }
+.packets-text { color: var(--clay-text-secondary, #55534e); font-family: 'Space Mono', monospace; }
+.unit { font-size: 12px; color: var(--clay-text-muted, #9f9b93); }
 
-.tag-pill { display: inline-block; background: #f4f4f5; color: #52525b; padding: 4px 12px; border-radius: 999px; font-size: 12px; margin-right: 8px; font-weight: 600; }
+.tag-pill { display: inline-block; background: #f0f8ff; color: var(--clay-blueberry, #01418d); padding: 4px 12px; border-radius: 999px; font-size: 12px; margin-right: 8px; font-weight: 600; border: 1px solid var(--clay-border-light, #eee9df); }
 
-.empty-state { text-align: center; padding: 60px 0 !important; color: #a1a1aa; }
+.empty-state { text-align: center; padding: 60px 0 !important; color: var(--clay-text-muted, #9f9b93); }
 .empty-icon { font-size: 40px; margin-bottom: 16px; opacity: 0.3; filter: grayscale(1); }
 </style>

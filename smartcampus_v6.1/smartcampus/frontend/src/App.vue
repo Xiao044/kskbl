@@ -173,39 +173,62 @@ export default {
 </script>
 
 <style>
-/* 核心布局样式 */
-html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: #f8fafc; font-family: 'Inter', system-ui, sans-serif; }
+/* ===== Clay Design System — Global Variables ===== */
+:root {
+  --clay-bg: #faf9f7;
+  --clay-text: #000000;
+  --clay-text-muted: #9f9b93;
+  --clay-text-secondary: #55534e;
+  --clay-border: #dad4c8;
+  --clay-border-light: #eee9df;
+  --clay-shadow: rgba(0,0,0,0.1) 0px 1px 1px, rgba(0,0,0,0.04) 0px -1px 1px inset, rgba(0,0,0,0.05) 0px -0.5px 1px;
+  --clay-shadow-hover: rgb(0,0,0) -7px 7px;
+  --clay-matcha: #078a52;
+  --clay-matcha-light: #84e7a5;
+  --clay-slushie: #3bd3fd;
+  --clay-lemon: #fbbd41;
+  --clay-ube: #43089f;
+  --clay-ube-light: #c1b0ff;
+  --clay-pomegranate: #fc7981;
+  --clay-blueberry: #01418d;
+  --clay-font: 'Roobert', 'Arial', sans-serif;
+  --clay-mono: 'Space Mono', monospace;
+}
+
+html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: var(--clay-bg); font-family: var(--clay-font); color: var(--clay-text); }
 #main-container { height: 100vh; }
 
 .app-layout { display: flex; height: 100%; width: 100%; }
 
-/* 侧边栏 */
-.sidebar { width: 260px; background: #0f172a; color: white; display: flex; flex-direction: column; flex-shrink: 0; box-shadow: 4px 0 20px rgba(0,0,0,0.1); }
-.brand { padding: 32px 24px; display: flex; align-items: center; gap: 12px; }
+/* 侧边栏 — Clay 风格：白底+燕麦边框 */
+.sidebar { width: 260px; background: #ffffff; color: var(--clay-text); display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid var(--clay-border); }
+.brand { padding: 32px 24px; display: flex; align-items: center; gap: 12px; border-bottom: 1px dashed var(--clay-border); }
 .logo-icon { font-size: 28px; }
-.brand-text h2 { margin: 0; font-size: 18px; letter-spacing: -0.5px; }
-.brand-text span { font-size: 11px; color: #94a3b8; }
+.brand-text h2 { margin: 0; font-size: 18px; letter-spacing: -0.5px; font-weight: 600; color: var(--clay-text); }
+.brand-text span { font-size: 11px; color: var(--clay-text-muted); }
 
 .menu { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
-.menu a { padding: 12px 16px; color: #94a3b8; text-decoration: none; border-radius: 10px; font-size: 14px; cursor: pointer; transition: all 0.2s; }
-.menu a:hover { background: rgba(255,255,255,0.05); color: white; }
-.menu a.active { background: #6366f1; color: white; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3); }
+.menu a { padding: 12px 16px; color: var(--clay-text-secondary); text-decoration: none; border-radius: 12px; font-size: 14px; font-weight: 500; cursor: pointer; transition: all 0.2s; }
+.menu a:hover { background: var(--clay-bg); color: var(--clay-text); }
+.menu a.active { background: var(--clay-ube-light); color: var(--clay-ube); font-weight: 600; box-shadow: var(--clay-shadow); }
 
-.menu-divider { height: 1px; background: rgba(255,255,255,0.05); margin: 12px 0; }
-.logout-btn { color: #f87171 !important; border: 1px solid rgba(248, 113, 113, 0.1); }
-.logout-btn:hover { background: rgba(248, 113, 113, 0.1) !important; }
+.menu-divider { height: 1px; background: var(--clay-border-light); margin: 12px 0; }
+.logout-btn { color: var(--clay-pomegranate) !important; border: 1px solid var(--clay-border) !important; }
+.logout-btn:hover { background: rgba(252, 121, 129, 0.1) !important; }
 
-.badge { float: right; background: #ef4444; font-size: 10px; padding: 2px 6px; border-radius: 10px; }
+.badge { float: right; background: var(--clay-pomegranate); font-size: 10px; padding: 2px 6px; border-radius: 10px; color: #ffffff; font-weight: 600; }
 
-/* 主内容区 */
-.main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-.topbar { height: 72px; background: white; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
-.user-chip { background: #f1f5f9; padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; color: #6366f1; }
+/* 主内容区 — Clay 暖调 */
+.main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; background: var(--clay-bg); }
+.topbar { height: 72px; background: #ffffff; border-bottom: 1px solid var(--clay-border); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
+.page-title { font-weight: 600; font-size: 18px; letter-spacing: -0.36px; }
+.time-now { color: var(--clay-text-muted); font-size: 13px; margin-right: 16px; font-family: var(--clay-mono); }
+.user-chip { background: var(--clay-border-light); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--clay-ube); border: 1px solid var(--clay-border); }
 
 .content-body { flex: 1; display: flex; gap: 24px; padding: 24px; overflow: hidden; }
 .view-container { flex: 1; min-width: 0; }
 .ai-sidebar { width: 380px; flex-shrink: 0; }
 
 .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-.dot.safe { background: #10b981; box-shadow: 0 0 8px rgba(16,185,129,0.5); }
+.dot.safe { background: var(--clay-matcha); box-shadow: 0 0 8px rgba(7,138,82,0.4); }
 </style>
