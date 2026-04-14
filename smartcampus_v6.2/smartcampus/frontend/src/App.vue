@@ -1,0 +1,331 @@
+<template>
+  <div id="main-container">
+    <LoginView v-if="!isLoggedIn" @login-success="handleLoginSuccess" />
+
+    <div v-else class="app-layout">
+      <aside class="sidebar" :class="{ 'is-collapsed': isCollapsed }">
+        <div class="sidebar__toggle" @click="isCollapsed = !isCollapsed" :title="isCollapsed ? '展开菜单' : '收起菜单'">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </div>
+
+        <div class="brand">
+          <div class="logo-icon">🛡️</div>
+          <div class="brand-text">
+            <h2>流量监督</h2>
+            <span>智慧校园态势感知系统</span>
+          </div>
+        </div>
+
+        <nav class="menu">
+          <a :class="{'active': currentView === 'Dashboard'}" @click="currentView = 'Dashboard'">
+            <span class="menu-icon">📊</span>
+            <span class="menu-label">全局态势看板</span>
+          </a>
+          <a :class="{'active': currentView === 'Realtime'}" @click="currentView = 'Realtime'">
+            <span class="menu-icon">⚡</span>
+            <span class="menu-label">瞬时活跃监控</span>
+          </a>
+          <a :class="{'active': currentView === 'Rank'}" @click="currentView = 'Rank'">
+            <span class="menu-icon">🏆</span>
+            <span class="menu-label">大流排行追踪</span>
+          </a>
+          <a :class="{'active': currentView === 'History'}" @click="currentView = 'History'">
+            <span class="menu-icon">🕐</span>
+            <span class="menu-label">历史溯源检索</span>
+          </a>
+          <a :class="{'active': currentView === 'Alert'}" @click="currentView = 'Alert'">
+            <span class="menu-icon">🛡️</span>
+            <span class="menu-label">威胁告警雷达</span>
+            <span class="badge" v-if="alerts.length">{{ alerts.length }}</span>
+          </a>
+
+          <div class="menu-divider"></div>
+          <a @click="handleLogout" class="logout-btn">
+            <span class="menu-icon">🚪</span>
+            <span class="menu-label">退出系统</span>
+          </a>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="status-item">
+            <span class="dot safe"></span>
+            <span class="menu-label">探针状态：已授权</span>
+          </div>
+        </div>
+      </aside>
+
+      <main class="main-wrapper">
+        <header class="topbar">
+          <h2 class="page-title">{{ pageTitle }}</h2>
+          <div class="user-info">
+            <span class="time-now">{{ currentTime }}</span>
+            <div class="user-chip">管理员 (Admin)</div>
+          </div>
+        </header>
+
+        <div class="content-body">
+          <div class="view-container">
+            <keep-alive>
+              <component 
+                :is="currentView" 
+                :flow="currentFlow" 
+                :alerts="alerts" 
+              />
+            </keep-alive>
+          </div>
+
+          <div class="ai-sidebar">
+            <Chat />
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</template>
+
+<script>
+// 完整导入你的 6 大核心组件 + 新增的 Login 组件
+import LoginView from './components/LoginView.vue'
+import Dashboard from './components/Dashboard.vue'
+import Realtime from './components/Realtime.vue'
+import Rank from './components/Rank.vue'
+import History from './components/History.vue' // 补全导入
+import Alert from './components/Alert.vue'
+import Chat from './components/Chat.vue'
+
+export default {
+  name: 'App',
+  // 完整注册所有组件
+  components: { LoginView, Dashboard, Realtime, Rank, History, Alert, Chat },
+  data() {
+    return {
+      isLoggedIn: !!localStorage.getItem('token'),
+      isCollapsed: false,
+      currentView: 'Dashboard',
+      ws: null,
+      currentFlow: [],
+      alerts: [],
+      currentTime: new Date().toLocaleTimeString()
+    }
+  },
+  computed: {
+    pageTitle() {
+      // 匹配你原始设定的所有页面标题
+      const titles = {
+        'Dashboard': '宏观态势总览',
+        'Realtime': '瞬时活跃链路切片监控',
+        'Rank': '全网流量节点排行榜',
+        'History': '历史流记录溯源检索',
+        'Alert': '动态威胁感知雷达'
+      };
+      return titles[this.currentView] || '系统主页';
+    }
+  },
+  mounted() {
+    // 初始加载时，如果已登录则启动 WebSocket
+    if (this.isLoggedIn) {
+      this.initWebSocket();
+    }
+    // 启动时钟
+    setInterval(() => {
+      this.currentTime = new Date().toLocaleTimeString();
+    }, 1000);
+  },
+  methods: {
+    handleLoginSuccess() {
+      this.isLoggedIn = true;
+      this.initWebSocket();
+    },
+    handleLogout() {
+      localStorage.removeItem('token');
+      this.isLoggedIn = false;
+      if (this.ws) this.ws.close();
+      // 重置状态
+      this.currentFlow = [];
+      this.alerts = [];
+    },
+    initWebSocket() {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      // 🌟 核心修复：动态获取服务器（也就是你的电脑）的局域网 IP
+      const serverIp = window.location.hostname;
+      this.ws = new WebSocket(`ws://${serverIp}:8000/ws/flow?token=${token}`);
+      
+      this.ws.onmessage = (event) => {
+        const data = JSON.parse(event.data);
+        if (data.flow) {
+          this.currentFlow = data.flow;
+        }
+        if (data.alerts && data.alerts.length > 0) {
+          this.alerts.push(...data.alerts);
+          // 保持最近 200 条告警，防止前端卡顿
+          if (this.alerts.length > 200) this.alerts.splice(0, this.alerts.length - 200);
+        }
+      };
+
+      this.ws.onclose = (e) => {
+        // 如果是 1008 错误，说明 Token 校验失败，强制登出
+        if (e.code === 1008) {
+          alert("身份认证失效，请重新登录");
+          this.handleLogout();
+        } else if (this.isLoggedIn) {
+          // 正常断开则尝试重连
+          setTimeout(() => this.initWebSocket(), 3000);
+        }
+      };
+
+      this.ws.onerror = () => {
+        console.error("WebSocket 连接异常");
+      };
+    }
+  }
+}
+</script>
+
+<style>
+/* ===== Clay Design System — Global Variables ===== */
+:root {
+  --clay-bg: #faf9f7;
+  --clay-text: #000000;
+  --clay-text-muted: #9f9b93;
+  --clay-text-secondary: #55534e;
+  --clay-border: #dad4c8;
+  --clay-border-light: #eee9df;
+  --clay-shadow: rgba(0,0,0,0.1) 0px 1px 1px, rgba(0,0,0,0.04) 0px -1px 1px inset, rgba(0,0,0,0.05) 0px -0.5px 1px;
+  --clay-shadow-hover: rgb(0,0,0) -7px 7px;
+  --clay-matcha: #078a52;
+  --clay-matcha-light: #84e7a5;
+  --clay-matcha-bg: #edfcf2;
+  --clay-slushie: #3bd3fd;
+  --clay-slushie-bg: #eaf8ff;
+  --clay-lemon: #fbbd41;
+  --clay-lemon-bg: #fef9ed;
+  --clay-ube: #43089f;
+  --clay-ube-light: #c1b0ff;
+  --clay-ube-bg: #f3eeff;
+  --clay-pomegranate: #fc7981;
+  --clay-pomegranate-bg: #fff0f1;
+  --clay-blueberry: #01418d;
+  --clay-blueberry-bg: #eef4ff;
+  --clay-sidebar-w: 260px;
+  --clay-sidebar-collapsed-w: 64px;
+  --clay-font: 'Roobert', 'Arial', sans-serif;
+  --clay-mono: 'Space Mono', monospace;
+  /* Glass */
+  --glass-bg: rgba(255, 255, 255, 0.55);
+  --glass-bg-heavy: rgba(255, 255, 255, 0.72);
+  --glass-blur: blur(12px);
+  --glass-border: rgba(218, 212, 200, 0.4);
+  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.04);
+}
+
+html, body { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: var(--clay-bg); font-family: var(--clay-font); color: var(--clay-text); }
+#main-container { height: 100vh; }
+
+.app-layout { display: flex; height: 100%; width: 100%; padding: 16px; box-sizing: border-box; gap: 16px; background: var(--clay-bg); background-image: radial-gradient(ellipse at 5% 15%, rgba(67, 8, 159, 0.045) 0%, transparent 50%), radial-gradient(ellipse at 85% 80%, rgba(7, 138, 82, 0.04) 0%, transparent 50%), radial-gradient(ellipse at 50% 50%, rgba(59, 211, 253, 0.03) 0%, transparent 50%); }
+
+/* ===== Sidebar — 折叠 + Clay 色彩增强 ===== */
+.sidebar {
+  width: var(--clay-sidebar-w);
+  background: var(--glass-bg);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  color: var(--clay-text);
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+  border-right: none;
+  border-radius: 20px;
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  overflow: hidden;
+  position: relative;
+}
+
+/* 折叠状态 */
+.sidebar.is-collapsed { width: var(--clay-sidebar-collapsed-w); }
+
+/* 折叠切换按钮 */
+.sidebar__toggle {
+  display: flex; align-items: center; justify-content: center;
+  height: 40px; margin: 12px 12px 0 12px;
+  border-radius: 10px; cursor: pointer;
+  background: rgba(250, 249, 247, 0.5); border: 1px solid var(--glass-border);
+  color: var(--clay-text-secondary);
+  transition: all 0.2s;
+}
+.sidebar__toggle:hover { background: var(--clay-ube-bg); color: var(--clay-ube); border-color: var(--clay-ube-light); }
+.sidebar.is-collapsed .sidebar__toggle { margin: 12px 8px 0 8px; }
+
+/* 品牌区 */
+.brand {
+  padding: 24px; display: flex; align-items: center; gap: 12px;
+  border-bottom: 1px dashed var(--glass-border);
+  white-space: nowrap; overflow: hidden;
+  transition: padding 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.sidebar.is-collapsed .brand { padding: 20px 8px; justify-content: center; }
+.logo-icon { font-size: 28px; flex-shrink: 0; }
+.brand-text { overflow: hidden; transition: opacity 0.3s 0.1s, transform 0.3s 0.1s; }
+.brand-text h2 { margin: 0; font-size: 18px; letter-spacing: -0.5px; font-weight: 600; color: var(--clay-text); }
+.brand-text span { font-size: 11px; color: var(--clay-text-muted); }
+.sidebar.is-collapsed .brand-text { opacity: 0; transform: translateX(-10px); pointer-events: none; transition: opacity 0.15s, transform 0.15s; }
+
+/* 菜单 */
+.menu { flex: 1; padding: 12px; display: flex; flex-direction: column; gap: 4px; overflow: hidden; }
+.menu a {
+  padding: 12px 16px; color: var(--clay-text-secondary); text-decoration: none;
+  border-radius: 12px; font-size: 14px; font-weight: 500; cursor: pointer;
+  transition: all 0.2s; display: flex; align-items: center; gap: 10px;
+  white-space: nowrap; overflow: hidden; position: relative;
+}
+.menu a:hover { background: rgba(250, 249, 247, 0.5); color: var(--clay-text); }
+/* Active 项：Ube 背景盒子阴影与 Clay 倾斜跳出感 */
+.menu a.active {
+  background: var(--clay-ube-light); color: var(--clay-ube); font-weight: 600;
+  box-shadow: var(--clay-shadow), 0 2px 8px rgba(67, 8, 159, 0.15);
+  transform: rotateZ(-1.5deg);
+}
+.menu a.active:hover { transform: rotateZ(-1.5deg) scale(1.02); }
+
+/* 菜单图标（折叠时保留） */
+.menu-icon { font-size: 18px; flex-shrink: 0; width: 24px; text-align: center; }
+/* 菜单文字标签（折叠时隐藏） */
+.menu-label {
+  overflow: hidden;
+  transition: opacity 0.3s 0.1s, transform 0.3s 0.1s;
+}
+.sidebar.is-collapsed .menu-label { opacity: 0; transform: translateX(-8px); width: 0; transition: opacity 0.1s, transform 0.1s; }
+
+/* 折叠时菜单项居中图标 */
+.sidebar.is-collapsed .menu a { padding: 12px 0; justify-content: center; }
+.sidebar.is-collapsed .badge { display: none; }
+
+.menu-divider { height: 1px; background: var(--glass-border); margin: 12px 0; }
+.logout-btn { color: var(--clay-pomegranate) !important; border: 1px solid var(--glass-border) !important; }
+.logout-btn:hover { background: rgba(252, 121, 129, 0.1) !important; }
+
+.badge { position: absolute; right: 12px; background: var(--clay-pomegranate); font-size: 10px; padding: 2px 6px; border-radius: 10px; color: #ffffff; font-weight: 600; }
+
+/* 底部状态 */
+.sidebar-footer { padding: 16px; border-top: 1px dashed var(--glass-border); overflow: hidden; }
+.status-item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--clay-text-muted); white-space: nowrap; }
+.sidebar.is-collapsed .sidebar-footer { padding: 12px 8px; }
+.sidebar.is-collapsed .status-item .menu-label { opacity: 0; width: 0; transition: opacity 0.1s; }
+
+/* ===== 主内容区 — Clay 暖调 ===== */
+.main-wrapper { flex: 1; display: flex; flex-direction: column; min-width: 0; gap: 16px; transition: margin-left 0s; }
+.topbar { height: 72px; background: var(--glass-bg); backdrop-filter: var(--glass-blur); -webkit-backdrop-filter: var(--glass-blur); border-bottom: 1px solid var(--glass-border); border-radius: 20px; box-shadow: var(--glass-shadow); display: flex; align-items: center; justify-content: space-between; padding: 0 32px; }
+.page-title { font-weight: 600; font-size: 18px; letter-spacing: -0.36px; }
+.time-now { color: var(--clay-text-muted); font-size: 13px; margin-right: 16px; font-family: var(--clay-mono); }
+.user-chip { background: rgba(218, 212, 200, 0.25); padding: 6px 12px; border-radius: 20px; font-size: 13px; font-weight: 600; color: var(--clay-ube); border: 1px solid var(--glass-border); }
+
+.content-body { flex: 1; display: flex; gap: 16px; overflow: hidden; }
+.view-container { flex: 1; min-width: 0; }
+.ai-sidebar { width: 380px; flex-shrink: 0; }
+
+.dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+.dot.safe { background: var(--clay-matcha); box-shadow: 0 0 8px rgba(7,138,82,0.4); }
+</style>
