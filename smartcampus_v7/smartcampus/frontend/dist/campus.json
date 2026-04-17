@@ -1,0 +1,165 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "校园围墙", "zone": "校园", "type": "boundary" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[0,0],[0,76],[96,76],[96,0],[0,0]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "主干道", "zone": "道路", "type": "road" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[0,39],[0,42],[96,42],[96,39],[0,39]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "纵向道路", "zone": "道路", "type": "road" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[42,0],[42,76],[44,76],[44,0],[42,0]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "1号宿舍楼", "zone": "学生宿舍区", "type": "dormitory", "subnet": "10.0.1." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[4,58],[4,70],[14,70],[14,58],[4,58]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "2号宿舍楼", "zone": "学生宿舍区", "type": "dormitory", "subnet": "10.0.2." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[16,58],[16,70],[26,70],[26,58],[16,58]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "3号宿舍楼", "zone": "学生宿舍区", "type": "dormitory", "subnet": "10.0.3." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[28,58],[28,70],[38,70],[38,58],[28,58]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "研究生公寓", "zone": "学生宿舍区", "type": "dormitory", "subnet": "10.0.4." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[12,44],[12,55],[24,55],[24,44],[12,44]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "第一教学楼", "zone": "教学区", "type": "teaching", "subnet": "10.0.10." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[46,58],[46,70],[56,70],[56,58],[46,58]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "第二教学楼", "zone": "教学区", "type": "teaching", "subnet": "10.0.11." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[58,58],[58,70],[68,70],[68,58],[58,58]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "实验楼A", "zone": "教学区", "type": "teaching", "subnet": "10.0.12." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[46,44],[46,55],[54,55],[54,44],[46,44]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "实验楼B", "zone": "教学区", "type": "teaching", "subnet": "10.0.13." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[56,44],[56,55],[66,55],[66,44],[56,44]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "图书馆", "zone": "教学区", "type": "teaching", "subnet": "10.0.14." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[72,58],[72,70],[88,70],[88,58],[72,58]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "行政主楼", "zone": "行政区", "type": "admin", "subnet": "10.0.20." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[6,26],[6,37],[20,37],[20,26],[6,26]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "信息中心", "zone": "行政区", "type": "admin", "subnet": "10.0.21." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[22,26],[22,37],[36,37],[36,26],[22,26]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "教务处", "zone": "行政区", "type": "admin", "subnet": "10.0.22." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[6,14],[6,24],[20,24],[20,14],[6,14]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "核心机房", "zone": "数据中心", "type": "datacenter", "subnet": "10.0.30." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[46,26],[46,37],[56,37],[56,26],[46,26]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "备份机房", "zone": "数据中心", "type": "datacenter", "subnet": "10.0.31." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[58,26],[58,37],[68,37],[68,26],[58,26]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "体育馆", "zone": "运动区", "type": "sports", "subnet": "10.0.40." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[4,4],[4,16],[18,16],[18,4],[4,4]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "操场", "zone": "运动区", "type": "sports", "subnet": "10.0.41." },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[20,4],[20,16],[38,16],[38,4],[20,4]]]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "校园出口", "zone": "出入口", "type": "gateway" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [[[44,0],[44,5],[52,5],[52,0],[44,0]]]
+      }
+    }
+  ]
+}
