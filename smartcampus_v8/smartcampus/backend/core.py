@@ -185,6 +185,11 @@ class ChatManager:
         session = self.get_session(ws)
         return list(session["history"])
 
+    def reset_history(self, ws: WebSocket):
+        session = self.get_session(ws)
+        session["history"].clear()
+        session["last_active_at"] = time.time()
+
     async def send_personal_message(self, ws: WebSocket, msg: dict):
         try:
             await ws.send_json(msg)

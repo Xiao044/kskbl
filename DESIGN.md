@@ -1,4 +1,4 @@
-# Design System Inspired by Clay
+                                       # Design System Inspired by Clay
 
 ## 1. Visual Theme & Atmosphere
 
@@ -32,8 +32,8 @@ What makes Clay truly distinctive is its hover micro-animations: buttons on hove
 - **Matcha 600** (`#078a52`): `--_swatches---color--matcha-600`, mid green
 - **Matcha 800** (`#02492a`): `--_swatches---color--matcha-800`, deep green for dark sections
 
-**Slushie (Cyan)**
-- **Slushie 500** (`#3bd3fd`): `--_swatches---color--slushie-500`, bright cyan accent
+**Slushie (Cyan)**<!-- 
+- **Slushie 500** (`#3bd3fd`): `--_swatches---color--slushie-500`, bright cyan accent -->
 - **Slushie 800** (`#0089ad`): `--_swatches---color--slushie-800`, deep teal
 
 **Lemon (Gold)**

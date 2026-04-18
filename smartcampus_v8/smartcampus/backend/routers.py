@@ -336,6 +336,18 @@ async def websocket_chat(ws: WebSocket):
         while True:
             data = await ws.receive_json()
 
+            if data.get("action") == "reset_session":
+                chat_manager.reset_history(ws)
+                await chat_manager.send_personal_message(ws, {
+                    "id": str(time.time()),
+                    "senderId": "system",
+                    "targetId": "me",
+                    "senderName": "System",
+                    "text": "会话上下文已重置，新对话已开始。",
+                    "time": time.strftime("%H:%M")
+                })
+                continue
+
             if data.get("senderId") == "me":
                 await chat_manager.send_personal_message(ws, data)
 
