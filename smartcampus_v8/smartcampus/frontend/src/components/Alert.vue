@@ -55,10 +55,14 @@
                 <span class="emoji">{{ item.icon }}</span> {{ item.type }}
                 <span v-if="item.count > 1" class="count-badge" :title="`累计攻击 ${item.count} 次`">x{{ item.count }}</span>
               </td>
-              <td class="ip-text">{{ item.src_ip }}</td>
+              <td class="ip-text">
+                <button class="ip-link" type="button" @click="$emit('view-ip', item.src_ip)">{{ item.src_ip }}</button>
+              </td>
               <td><span class="zone-tag-alert">{{ item.src_zone || '外部网络' }}</span></td>
               <td><span class="geo-tag">{{ formatGeo(item.geo) }}</span></td>
-              <td class="ip-dst-text">{{ item.dst_ip || 'N/A' }}</td>
+              <td class="ip-dst-text">
+                <button class="ip-link" type="button" @click="$emit('view-ip', item.dst_ip || 'N/A')">{{ item.dst_ip || 'N/A' }}</button>
+              </td>
               <td class="bytes-text">{{ item.bytes ? formatBytes(item.bytes) : '--' }}</td>
               <td class="packets-text">{{ item.packets || '--' }}</td>
               <td>
@@ -84,6 +88,7 @@
 <script>
 export default {
   name: 'Alert',
+  emits: ['view-ip'],
   props: { alerts: { type: Array, default: () => [] } },
   data() {
     return {
@@ -270,6 +275,19 @@ tr:hover td { background: var(--clay-bg, #faf9f7); }
 .time-text { color: var(--clay-text-muted, #9f9b93); font-family: 'Space Mono', monospace; font-size: 13px; }
 .threat-text { font-weight: 600; color: #000000; }
 .ip-text { font-family: 'Space Mono', monospace; font-weight: 600; color: var(--clay-ube, #43089f); }
+.ip-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.ip-link:hover {
+  color: var(--clay-blueberry, #01418d);
+  transform: translateY(-1px);
+}
 .count-badge {
   display: inline-flex;
   align-items: center;

@@ -3,7 +3,7 @@ import json
 import os
 import time
 
-from fastapi import APIRouter, WebSocket
+from fastapi import APIRouter, Query, WebSocket
 from openai import AsyncOpenAI
 
 from core import lock, global_state, chat_manager, playback_queue
@@ -110,6 +110,146 @@ def _get_ip_history(ip, limit=10):
     alerts = sorted(alerts, key=lambda x: str(x.get("time", "")), reverse=True)[:limit]
     flows = sorted(flows, key=lambda x: x.get("bytes", 0), reverse=True)[:limit]
     return {"ip": ip, "alerts": alerts, "flows": flows}
+
+
+def _aggregate_named_metric(items, name_key, value_key):
+    bucket = {}
+    for item in items:
+        name = str(item.get(name_key) or "暂无数据")
+        bucket[name] = bucket.get(name, 0) + int(item.get(value_key, 0) or 0)
+    result = [{"name": key, value_key: value} for key, value in bucket.items()]
+    result.sort(key=lambda x: x.get(value_key, 0), reverse=True)
+    return result[:8] or [{"name": "暂无数据", value_key: 0}]
+
+
+def _build_ip_detail(ip, limit=20):
+    state = _safe_copy_state()
+    alerts = [
+        item for item in (state["recent_alerts"] + state["current_alerts"])
+        if item.get("src_ip") == ip or item.get("dst_ip") == ip
+    ]
+    flows = [
+        item for item in (state["flow_history"] + state["current_flow"] + state["topk_flow"])
+        if item.get("src_ip") == ip or item.get("dst_ip") == ip
+    ]
+
+    dedup_alerts = []
+    alert_keys = set()
+    for item in alerts:
+        key = (
+            item.get("time", ""),
+            item.get("src_ip", ""),
+            item.get("dst_ip", ""),
+            item.get("type", ""),
+            item.get("bytes", 0),
+            item.get("packets", 0),
+        )
+        if key in alert_keys:
+            continue
+        alert_keys.add(key)
+        dedup_alerts.append(item)
+
+    dedup_flows = []
+    flow_keys = set()
+    for item in flows:
+        key = (
+            item.get("src_ip", ""),
+            item.get("dst_ip", ""),
+            item.get("bytes", 0),
+            item.get("packets", 0),
+            tuple(item.get("protocols", []) or []),
+        )
+        if key in flow_keys:
+            continue
+        flow_keys.add(key)
+        dedup_flows.append(item)
+
+    dedup_alerts.sort(key=lambda x: str(x.get("time", "")), reverse=True)
+    dedup_flows.sort(key=lambda x: x.get("bytes", 0), reverse=True)
+
+    total_bytes = sum(int(item.get("bytes", 0) or 0) for item in dedup_flows)
+    total_packets = sum(int(item.get("packets", 0) or 0) for item in dedup_flows)
+    high_risk_count = sum(1 for item in dedup_alerts if item.get("level") == "high")
+    peer_ips = sorted({
+        candidate
+        for item in dedup_alerts + dedup_flows
+        for candidate in (item.get("src_ip"), item.get("dst_ip"))
+        if candidate and candidate != ip
+    })
+
+    protocol_dist_map = {}
+    for item in dedup_flows:
+        protocols = item.get("protocols") or ["Unknown"]
+        for proto in protocols:
+            if proto not in protocol_dist_map:
+                protocol_dist_map[proto] = {"name": proto, "bytes": 0, "packets": 0}
+            protocol_dist_map[proto]["bytes"] += int(item.get("bytes", 0) or 0)
+            protocol_dist_map[proto]["packets"] += int(item.get("packets", 0) or 0)
+    protocol_dist = sorted(protocol_dist_map.values(), key=lambda x: x["bytes"], reverse=True)[:8] or [{"name": "暂无数据", "bytes": 0, "packets": 0}]
+
+    port_dist = [{"name": "当前版本未记录端口", "bytes": total_bytes, "packets": total_packets}]
+
+    trend_source = dedup_alerts[:]
+    if not trend_source:
+        trend_source = [
+            {
+                "time": f"流量#{index + 1}",
+                "bytes": item.get("bytes", 0),
+                "packets": item.get("packets", 0),
+            }
+            for index, item in enumerate(dedup_flows[:8])
+        ]
+    trend = [
+        {
+            "time": item.get("time", "--"),
+            "bytes": int(item.get("bytes", 0) or 0),
+            "packets": int(item.get("packets", 0) or 0),
+        }
+        for item in reversed(trend_source[:8])
+    ]
+
+    latest_alert = dedup_alerts[0] if dedup_alerts else {}
+    zone = latest_alert.get("src_zone") if latest_alert.get("src_ip") == ip else ""
+    if not zone:
+        zone = next(
+            (
+                item.get("src_zone") or item.get("dst_zone")
+                for item in dedup_flows
+                if item.get("src_ip") == ip or item.get("dst_ip") == ip
+            ),
+            "未知区域"
+        )
+
+    risk_level = "low"
+    if high_risk_count > 0:
+        risk_level = "high"
+    elif dedup_alerts:
+        risk_level = "medium"
+
+    return {
+        "summary": {
+            "risk_level": risk_level,
+            "alert_count": len(dedup_alerts),
+            "high_risk_count": high_risk_count,
+            "total_bytes": total_bytes,
+            "total_packets": total_packets,
+            "peer_count": len(peer_ips),
+            "zone": zone or "未知区域",
+            "latest_alert_type": latest_alert.get("type", "暂无告警")
+        },
+        "trend": trend,
+        "protocol_dist": protocol_dist,
+        "port_dist": port_dist,
+        "alerts": dedup_alerts[:limit],
+        "flows": [
+            {
+                **item,
+                "time": item.get("time", "--")
+            }
+            for item in dedup_flows[:limit]
+        ],
+        "peer_ips": peer_ips[:20]
+    }
 
 
 def _build_context_snapshot():
@@ -415,6 +555,11 @@ async def _run_ai_chat(user_text, history):
 @router.get("/api/topk")
 async def get_topk():
     return {"top10": _get_topk_data(limit=10)}
+
+
+@router.get("/api/ip-history")
+async def get_ip_detail(ip: str = Query(...), limit: int = Query(20, ge=1, le=50)):
+    return _build_ip_detail(ip.strip(), limit)
 
 
 @router.websocket("/ws/flow")

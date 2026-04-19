@@ -37,9 +37,13 @@
             <tbody>
               <tr v-for="(item, index) in topkList" :key="index">
                 <td><span :class="['rank-num', index < 3 ? 'top-three' : '']">{{ index + 1 }}</span></td>
-                <td class="ip-text">{{ item.src_ip }}</td>
+                <td class="ip-text">
+                  <button class="ip-link" type="button" @click="$emit('view-ip', item.src_ip)">{{ item.src_ip }}</button>
+                </td>
                 <td><span class="zone-tag-rank">{{ item.src_zone || '--' }}</span></td>
-                <td class="ip-text">{{ item.dst_ip }}</td>
+                <td class="ip-text">
+                  <button class="ip-link" type="button" @click="$emit('view-ip', item.dst_ip)">{{ item.dst_ip }}</button>
+                </td>
                 <td>
                   <span class="proto-tag" v-for="p in item.protocols" :key="p">{{ p }}</span>
                 </td>
@@ -67,6 +71,7 @@
 <script>
 export default {
   name: 'Rank',
+  emits: ['view-ip', 'logout'],
   data() {
     return {
       echarts: null,
@@ -246,6 +251,19 @@ td { padding: 16px; border-bottom: 1px solid var(--clay-border-light, #eee9df); 
 .rank-num.top-three { background: var(--clay-ube-light, #c1b0ff); color: var(--clay-ube, #43089f); border-color: var(--clay-ube-light, #c1b0ff); }
 
 .ip-text { font-family: 'Space Mono', monospace; font-weight: 600; color: #000000; }
+.ip-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.ip-link:hover {
+  color: var(--clay-ube, #43089f);
+  transform: translateY(-1px);
+}
 .proto-tag { display: inline-block; padding: 2px 8px; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border-radius: 999px; font-size: 11px; font-weight: 600; margin-right: 4px; border: 1px solid var(--clay-border-light, #eee9df); }
 
 .progress-container { width: 100%; height: 8px; background: var(--clay-border-light, #eee9df); border-radius: 4px; overflow: hidden; }

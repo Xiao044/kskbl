@@ -61,10 +61,10 @@
             <tr v-for="log in paginatedLogs" :key="log.aggregateKey">
               <td class="time-col">{{ log.time }}</td>
               <td class="path-col">
-                <span class="ip">{{ log.src_ip }}</span>
+                <button class="ip ip-link" type="button" @click="$emit('view-ip', log.src_ip)">{{ log.src_ip }}</button>
                 <span v-if="log.count > 1" class="count-badge" :title="`累计攻击 ${log.count} 次`">x{{ log.count }}</span>
                 <span class="arrow">➔</span>
-                <span class="ip">{{ log.dst_ip }}</span>
+                <button class="ip ip-link" type="button" @click="$emit('view-ip', log.dst_ip)">{{ log.dst_ip }}</button>
               </td>
               <td><span class="zone-tag-hist">{{ log.src_zone || '--' }}</span></td>
               <td><span class="proto-tag">{{ log.proto }}</span></td>
@@ -96,6 +96,7 @@
 <script>
 export default {
   name: 'History',
+  emits: ['view-ip'],
   // 接收 App.vue 传过来的实时数据
   props: {
     flow: { type: Array, default: () => [] },
@@ -305,6 +306,19 @@ td { padding: 15px 20px; border-bottom: 1px solid var(--clay-border-light, #eee9
 .time-col { color: var(--clay-text-muted, #9f9b93); font-family: 'Space Mono', monospace; font-size: 13px; }
 .path-col { display: flex; align-items: center; gap: 10px; font-weight: 600; }
 .ip { font-family: 'Space Mono', monospace; }
+.ip-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+.ip-link:hover {
+  color: var(--clay-ube, #43089f);
+  transform: translateY(-1px);
+}
 .arrow { color: var(--clay-border, #dad4c8); }
 .proto-tag { padding: 4px 10px; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid var(--clay-border-light, #eee9df); }
 .data-col { font-family: 'Space Mono', monospace; color: var(--clay-text-secondary, #55534e); font-size: 13px; }

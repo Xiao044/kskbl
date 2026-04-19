@@ -24,26 +24,30 @@
         </div>
 
         <nav class="menu">
-          <a :class="{'active': currentView === 'Dashboard'}" @click="currentView = 'Dashboard'">
+          <a :class="{'active': currentView === 'Dashboard'}" @click="switchView('Dashboard')">
             <span class="menu-icon">📊</span>
             <span class="menu-label">全局态势看板</span>
           </a>
-          <a :class="{'active': currentView === 'Realtime'}" @click="currentView = 'Realtime'">
+          <a :class="{'active': currentView === 'Realtime'}" @click="switchView('Realtime')">
             <span class="menu-icon">⚡</span>
             <span class="menu-label">瞬时活跃监控</span>
           </a>
-          <a :class="{'active': currentView === 'Rank'}" @click="currentView = 'Rank'">
+          <a :class="{'active': currentView === 'Rank'}" @click="switchView('Rank')">
             <span class="menu-icon">🏆</span>
             <span class="menu-label">大流排行追踪</span>
           </a>
-          <a :class="{'active': currentView === 'History'}" @click="currentView = 'History'">
+          <a :class="{'active': currentView === 'History'}" @click="switchView('History')">
             <span class="menu-icon">🕐</span>
             <span class="menu-label">历史溯源检索</span>
           </a>
-          <a :class="{'active': currentView === 'Alert'}" @click="currentView = 'Alert'">
+          <a :class="{'active': currentView === 'Alert'}" @click="switchView('Alert')">
             <span class="menu-icon">🛡️</span>
             <span class="menu-label">威胁告警雷达</span>
             <span class="badge" v-if="alerts.length">{{ alerts.length }}</span>
+          </a>
+          <a :class="{'active': currentView === 'IpDetail'}" @click="switchView('IpDetail')">
+            <span class="menu-icon">🧭</span>
+            <span class="menu-label">独立 IP 画像</span>
           </a>
         </nav>
 
@@ -92,9 +96,13 @@
               :is="currentView"
               :flow="currentFlow"
               :alerts="alerts"
+              :selected-ip="selectedIp"
               :history-search-seed="historySearchSeed"
               :history-focus-token="historyFocusToken"
               :history-zone-seed="historyZoneSeed"
+              @view-ip="openIpDetail"
+              @back="closeIpDetail"
+              @view-history="openHistoryForIp"
             />
           </div>
         </div>
@@ -114,6 +122,7 @@
             @chat-focus="onChatFocus"
             @chat-blur="onChatBlur"
             @message-sent="onMessageSent"
+            @view-ip="openIpDetail"
             @focus-ip-history="openHistoryForIp"
             @focus-zone-history="openHistoryForZone"
           />
@@ -135,10 +144,11 @@ const Rank = defineAsyncComponent(() => import('./components/Rank.vue'))
 const History = defineAsyncComponent(() => import('./components/History.vue'))
 const Alert = defineAsyncComponent(() => import('./components/Alert.vue'))
 const Chat = defineAsyncComponent(() => import('./components/Chat.vue'))
+const IpDetail = defineAsyncComponent(() => import('./components/IpDetail.vue'))
 
 export default {
   name: 'App',
-  components: { LoginView, Dashboard, Realtime, Rank, History, Alert, Chat, ChatMascotHandle },
+  components: { LoginView, Dashboard, Realtime, Rank, History, Alert, Chat, IpDetail, ChatMascotHandle },
   data() {
     return {
       isLoggedIn: !!localStorage.getItem('token'),
@@ -160,6 +170,8 @@ export default {
       historySearchSeed: '',
       historyZoneSeed: '',
       historyFocusToken: 0,
+      selectedIp: '',
+      previousView: 'Dashboard',
       currentTime: new Date().toLocaleTimeString(),
       clockTimer: null,
       nextAlertId: 1
@@ -172,7 +184,8 @@ export default {
         'Realtime': '瞬时活跃链路切片监控',
         'Rank': '全网流量节点排行榜',
         'History': '历史流记录溯源检索',
-        'Alert': '动态威胁感知雷达'
+        'Alert': '动态威胁感知雷达',
+        'IpDetail': '独立 IP 画像看板'
       };
       return titles[this.currentView] || '系统主页';
     }
@@ -209,6 +222,13 @@ export default {
     window.removeEventListener('keydown', this._escHandler);
   },
   methods: {
+    switchView(viewName) {
+      if (!viewName) return;
+      if (viewName !== 'IpDetail') {
+        this.previousView = viewName;
+      }
+      this.currentView = viewName;
+    },
     startUiAnimation(target) {
       const timerKey = target === 'sidebar' ? 'sidebarAnimationTimer' : 'chatAnimationTimer';
       const flagKey = target === 'sidebar' ? 'isSidebarAnimating' : 'isChatAnimating';
@@ -235,12 +255,30 @@ export default {
     onChatFocus() { this.chatFocused = true; },
     onChatBlur() { this.chatFocused = false; },
     onMessageSent() { this.chatFocused = false; },
+    openIpDetail(ip) {
+      if (!ip || typeof ip !== 'string') return;
+      const normalizedIp = ip.trim();
+      if (!normalizedIp || normalizedIp === 'N/A') return;
+
+      if (this.currentView !== 'IpDetail') {
+        this.previousView = this.currentView;
+      }
+      this.selectedIp = normalizedIp;
+      this.currentView = 'IpDetail';
+      this.isChatOpen = false;
+      this.chatFocused = false;
+    },
+    closeIpDetail() {
+      this.currentView = this.previousView && this.previousView !== 'IpDetail'
+        ? this.previousView
+        : 'Dashboard';
+    },
     openHistoryForIp(ip) {
       if (!ip || typeof ip !== 'string') return;
       this.historySearchSeed = ip.trim();
       this.historyZoneSeed = '';
       this.historyFocusToken += 1;
-      this.currentView = 'History';
+      this.switchView('History');
       this.isChatOpen = false;
       this.chatFocused = false;
     },
@@ -249,7 +287,7 @@ export default {
       this.historySearchSeed = '';
       this.historyZoneSeed = zone.trim();
       this.historyFocusToken += 1;
-      this.currentView = 'History';
+      this.switchView('History');
       this.isChatOpen = false;
       this.chatFocused = false;
     },
@@ -285,6 +323,9 @@ export default {
       if (this.ws) this.ws.close();
       this.currentFlow = [];
       this.alerts = [];
+      this.selectedIp = '';
+      this.previousView = 'Dashboard';
+      this.currentView = 'Dashboard';
       this.pendingFlowData = null;
       this.pendingAlertsBatch = [];
       if (this.pendingFlowFrame) {

@@ -35,7 +35,7 @@
               :key="`${msg.id}-quick-${ip}`"
               class="quick-action-chip"
               type="button"
-              @click="openHistoryForIp(ip)"
+              @click="openIpDetail(ip)"
             >
               {{ ip }}
             </button>
@@ -65,7 +65,7 @@
                   <button
                     class="analysis-card__main analysis-link"
                     type="button"
-                    @click="openHistoryForIp(msg.analysisMeta.context.current_top_talker.src_ip)"
+                    @click="openIpDetail(msg.analysisMeta.context.current_top_talker.src_ip)"
                   >{{ msg.analysisMeta.context.current_top_talker.src_ip || '暂无数据' }}</button>
                   <div class="analysis-card__sub">
                     {{ msg.analysisMeta.context.current_top_talker.bytes || 0 }} Bytes /
@@ -97,7 +97,7 @@
                   <span class="analysis-event__time">{{ event.time }}</span>
                   <span class="analysis-event__text">
                     {{ event.type }} /
-                    <button class="analysis-inline-link" type="button" @click="openHistoryForIp(event.src_ip)">{{ event.src_ip }}</button>
+                    <button class="analysis-inline-link" type="button" @click="openIpDetail(event.src_ip)">{{ event.src_ip }}</button>
                     /
                     <button class="analysis-inline-link" type="button" @click="openHistoryForZone(event.zone)">{{ event.zone }}</button>
                   </span>
@@ -120,8 +120,8 @@
                   v-if="extractToolIp(tool)"
                   class="tool-card__action"
                   type="button"
-                  @click="openHistoryForIp(extractToolIp(tool))"
-                >跳转到该 IP 历史检索</button>
+                  @click="openIpDetail(extractToolIp(tool))"
+                >打开该 IP 独立画像</button>
                 <div
                   v-for="(line, lineIndex) in tool.summary || []"
                   :key="`${msg.id}-tool-${index}-line-${lineIndex}`"
@@ -169,7 +169,7 @@
 <script>
 export default {
   name: 'Chat',
-  emits: ['chat-focus', 'chat-blur', 'message-sent', 'focus-ip-history', 'focus-zone-history'],
+  emits: ['chat-focus', 'chat-blur', 'message-sent', 'focus-ip-history', 'focus-zone-history', 'view-ip'],
   data() {
     return {
       ws: null,
@@ -261,6 +261,12 @@ export default {
     openHistoryForIp(ip) {
       if (!ip || typeof ip !== 'string') return;
       this.$emit('focus-ip-history', ip.trim());
+    },
+    openIpDetail(ip) {
+      if (!ip || typeof ip !== 'string') return;
+      const normalizedIp = ip.trim();
+      if (!normalizedIp) return;
+      this.$emit('view-ip', normalizedIp);
     },
     openHistoryForZone(zone) {
       if (!zone || typeof zone !== 'string') return;
