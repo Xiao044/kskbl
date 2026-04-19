@@ -49,7 +49,11 @@
               <div class="analysis-grid">
                 <div class="analysis-card" v-if="msg.analysisMeta.context.current_top_talker">
                   <div class="analysis-card__title">Top Talker</div>
-                  <div class="analysis-card__main">{{ msg.analysisMeta.context.current_top_talker.src_ip || '暂无数据' }}</div>
+                  <button
+                    class="analysis-card__main analysis-link"
+                    type="button"
+                    @click="openHistoryForIp(msg.analysisMeta.context.current_top_talker.src_ip)"
+                  >{{ msg.analysisMeta.context.current_top_talker.src_ip || '暂无数据' }}</button>
                   <div class="analysis-card__sub">
                     {{ msg.analysisMeta.context.current_top_talker.bytes || 0 }} Bytes /
                     {{ msg.analysisMeta.context.current_top_talker.packets || 0 }} Pkts
@@ -74,7 +78,11 @@
                   class="analysis-event"
                 >
                   <span class="analysis-event__time">{{ event.time }}</span>
-                  <span class="analysis-event__text">{{ event.type }} / {{ event.src_ip }} / {{ event.zone }}</span>
+                  <span class="analysis-event__text">
+                    {{ event.type }} /
+                    <button class="analysis-inline-link" type="button" @click="openHistoryForIp(event.src_ip)">{{ event.src_ip }}</button>
+                    / {{ event.zone }}
+                  </span>
                 </div>
               </div>
             </div>
@@ -90,6 +98,12 @@
                   <span class="tool-card__name">{{ tool.label || tool.name }}</span>
                   <span class="tool-card__args">{{ formatToolArguments(tool.arguments) }}</span>
                 </div>
+                <button
+                  v-if="extractToolIp(tool)"
+                  class="tool-card__action"
+                  type="button"
+                  @click="openHistoryForIp(extractToolIp(tool))"
+                >跳转到该 IP 历史检索</button>
                 <div
                   v-for="(line, lineIndex) in tool.summary || []"
                   :key="`${msg.id}-tool-${index}-line-${lineIndex}`"
@@ -137,7 +151,7 @@
 <script>
 export default {
   name: 'Chat',
-  emits: ['chat-focus', 'chat-blur', 'message-sent'],
+  emits: ['chat-focus', 'chat-blur', 'message-sent', 'focus-ip-history'],
   data() {
     return {
       ws: null,
@@ -190,6 +204,14 @@ export default {
       const entries = Object.entries(args || {});
       if (!entries.length) return '默认参数';
       return entries.map(([key, value]) => `${key}: ${value}`).join(' / ');
+    },
+    extractToolIp(tool) {
+      const ip = tool && tool.arguments ? tool.arguments.ip : '';
+      return typeof ip === 'string' && ip.trim() ? ip.trim() : '';
+    },
+    openHistoryForIp(ip) {
+      if (!ip || typeof ip !== 'string') return;
+      this.$emit('focus-ip-history', ip.trim());
     },
     inferPendingStatus(text) {
       const normalized = String(text || '').toLowerCase();
@@ -311,15 +333,50 @@ export default {
 .analysis-card { padding: 12px; border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(247,244,239,0.82)); border: 1px solid rgba(218,212,200,0.38); }
 .analysis-card__title { font-size: 11px; color: var(--clay-text-muted, #9f9b93); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
 .analysis-card__main { margin-top: 6px; font-size: 14px; font-weight: 800; color: #171717; word-break: break-all; }
+.analysis-link {
+  display: inline-flex;
+  width: fit-content;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+  text-decoration: underline;
+  text-decoration-color: rgba(67, 8, 159, 0.25);
+  text-underline-offset: 3px;
+}
+.analysis-link:hover { color: var(--clay-ube, #43089f); }
 .analysis-card__sub { margin-top: 4px; font-size: 12px; color: var(--clay-text-secondary, #55534e); }
 .analysis-events { display: flex; flex-direction: column; gap: 8px; }
 .analysis-event { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.5; color: var(--clay-text-secondary, #55534e); }
 .analysis-event__time { flex-shrink: 0; padding: 2px 8px; border-radius: 999px; background: rgba(243, 238, 255, 0.86); color: var(--clay-ube, #43089f); font-family: 'Space Mono', monospace; font-size: 11px; }
 .analysis-event__text { word-break: break-word; }
+.analysis-inline-link {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  color: var(--clay-ube, #43089f);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
 .tool-card { padding: 12px; border-radius: 16px; background: rgba(250, 249, 247, 0.92); border: 1px solid rgba(218,212,200,0.38); display: flex; flex-direction: column; gap: 6px; }
 .tool-card__header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .tool-card__name { font-size: 12px; font-weight: 800; color: #171717; }
 .tool-card__args { font-size: 11px; color: var(--clay-text-muted, #9f9b93); }
+.tool-card__action {
+  align-self: flex-start;
+  border: 1px solid rgba(193, 176, 255, 0.42);
+  background: rgba(243, 238, 255, 0.88);
+  color: var(--clay-ube, #43089f);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.tool-card__action:hover { transform: translateY(-1px); }
 .tool-card__line { font-size: 12px; color: var(--clay-text-secondary, #55534e); line-height: 1.5; }
 
 .typing-bubble { display: flex; gap: 4px; align-items: center; padding: 16px; }

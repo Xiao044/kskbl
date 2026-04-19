@@ -96,7 +96,9 @@ export default {
   // 接收 App.vue 传过来的实时数据
   props: {
     flow: { type: Array, default: () => [] },
-    alerts: { type: Array, default: () => [] }
+    alerts: { type: Array, default: () => [] },
+    historySearchSeed: { type: String, default: '' },
+    historyFocusToken: { type: Number, default: 0 }
   },
   data() {
     return {
@@ -160,6 +162,11 @@ export default {
 
         this.historyLogs.unshift(...alertLogs);
         this.limitHistorySize();
+      }
+    },
+    historyFocusToken: {
+      handler() {
+        this.applyHistorySearchSeed();
       }
     }
   },
@@ -232,6 +239,12 @@ export default {
     }
   },
   methods: {
+    applyHistorySearchSeed() {
+      const nextValue = String(this.historySearchSeed || '').trim();
+      if (!nextValue) return;
+      this.searchQuery = nextValue;
+      this.currentPage = 1;
+    },
     handleSearch() {
       this.currentPage = 1;
     },
@@ -248,6 +261,9 @@ export default {
         this.historyLogs = this.historyLogs.slice(0, 1000);
       }
     }
+  },
+  mounted() {
+    this.applyHistorySearchSeed();
   }
 }
 </script>

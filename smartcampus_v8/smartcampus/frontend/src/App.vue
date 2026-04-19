@@ -92,6 +92,8 @@
               :is="currentView"
               :flow="currentFlow"
               :alerts="alerts"
+              :history-search-seed="historySearchSeed"
+              :history-focus-token="historyFocusToken"
             />
           </div>
         </div>
@@ -107,7 +109,12 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
         </div>
         <div class="chat-drawer__panel">
-          <Chat @chat-focus="onChatFocus" @chat-blur="onChatBlur" @message-sent="onMessageSent" />
+          <Chat
+            @chat-focus="onChatFocus"
+            @chat-blur="onChatBlur"
+            @message-sent="onMessageSent"
+            @focus-ip-history="openHistoryForIp"
+          />
         </div>
       </div>
     </div>
@@ -148,6 +155,8 @@ export default {
       pendingFlowFrame: null,
       pendingFlowData: null,
       pendingAlertsBatch: [],
+      historySearchSeed: '',
+      historyFocusToken: 0,
       currentTime: new Date().toLocaleTimeString(),
       clockTimer: null,
       nextAlertId: 1
@@ -223,6 +232,14 @@ export default {
     onChatFocus() { this.chatFocused = true; },
     onChatBlur() { this.chatFocused = false; },
     onMessageSent() { this.chatFocused = false; },
+    openHistoryForIp(ip) {
+      if (!ip || typeof ip !== 'string') return;
+      this.historySearchSeed = ip.trim();
+      this.historyFocusToken += 1;
+      this.currentView = 'History';
+      this.isChatOpen = false;
+      this.chatFocused = false;
+    },
     scheduleDataFlush() {
       if (this.pendingFlowFrame) return;
 
