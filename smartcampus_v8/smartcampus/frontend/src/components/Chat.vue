@@ -28,6 +28,19 @@
           </div>
           <div class="bubble" :class="{ 'bubble-system': msg.senderId === 'system' }">{{ msg.text }}</div>
 
+          <div v-if="msg.senderId === 'ai' && getQuickActionIps(msg).length" class="quick-actions">
+            <span class="quick-actions__label">快捷检索</span>
+            <button
+              v-for="ip in getQuickActionIps(msg)"
+              :key="`${msg.id}-quick-${ip}`"
+              class="quick-action-chip"
+              type="button"
+              @click="openHistoryForIp(ip)"
+            >
+              {{ ip }}
+            </button>
+          </div>
+
           <div v-if="msg.senderId === 'ai' && hasAnalysisMeta(msg)" class="analysis-panel">
             <div class="analysis-section">
               <div class="analysis-title">当前态势依据</div>
@@ -205,9 +218,40 @@ export default {
       if (!entries.length) return '默认参数';
       return entries.map(([key, value]) => `${key}: ${value}`).join(' / ');
     },
+    extractIpsFromText(text) {
+      const matches = String(text || '').match(/\b(?:\d{1,3}\.){3}\d{1,3}\b/g) || [];
+      const validIps = matches.filter((ip) => ip.split('.').every((part) => {
+        const value = Number(part);
+        return Number.isInteger(value) && value >= 0 && value <= 255;
+      }));
+      return Array.from(new Set(validIps));
+    },
     extractToolIp(tool) {
       const ip = tool && tool.arguments ? tool.arguments.ip : '';
       return typeof ip === 'string' && ip.trim() ? ip.trim() : '';
+    },
+    getQuickActionIps(msg) {
+      const ips = [];
+      const textIps = this.extractIpsFromText(msg && msg.text);
+      ips.push(...textIps);
+
+      if (this.hasAnalysisMeta(msg)) {
+        const topTalkerIp = msg.analysisMeta.context.current_top_talker && msg.analysisMeta.context.current_top_talker.src_ip;
+        if (topTalkerIp) ips.push(topTalkerIp);
+
+        const events = msg.analysisMeta.context.latest_high_risk_events || [];
+        events.forEach((event) => {
+          if (event && event.src_ip) ips.push(event.src_ip);
+        });
+
+        const toolCalls = msg.analysisMeta.tool_calls || [];
+        toolCalls.forEach((tool) => {
+          const toolIp = this.extractToolIp(tool);
+          if (toolIp) ips.push(toolIp);
+        });
+      }
+
+      return Array.from(new Set(ips)).slice(0, 6);
     },
     openHistoryForIp(ip) {
       if (!ip || typeof ip !== 'string') return;
@@ -320,6 +364,35 @@ export default {
 .is-me .bubble { background: #000000; color: #ffffff; border: none; border-top-right-radius: 4px; }
 .is-ai .bubble { border-top-left-radius: 4px; }
 .bubble-system { background: rgba(243, 238, 255, 0.72); color: var(--clay-ube, #43089f); border-color: rgba(193, 176, 255, 0.45); }
+
+.quick-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+.quick-actions__label {
+  font-size: 11px;
+  font-weight: 800;
+  color: var(--clay-text-muted, #9f9b93);
+}
+.quick-action-chip {
+  border: 1px solid rgba(193, 176, 255, 0.42);
+  background: rgba(243, 238, 255, 0.88);
+  color: var(--clay-ube, #43089f);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+}
+.quick-action-chip:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--glass-shadow, 0 4px 24px rgba(0,0,0,0.04));
+  background: rgba(231, 223, 255, 0.96);
+}
 
 .analysis-panel { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
 .analysis-section { background: rgba(255, 255, 255, 0.58); border: 1px solid rgba(218,212,200,0.45); border-radius: 18px; padding: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
