@@ -171,6 +171,7 @@ export default {
   name: 'Chat',
   emits: ['chat-focus', 'chat-blur', 'message-sent', 'focus-ip-history', 'focus-zone-history', 'view-ip'],
   props: {
+    prefillDisplay: { type: String, default: '' },
     prefillMessage: { type: String, default: '' },
     prefillToken: { type: Number, default: 0 }
   },
@@ -298,7 +299,10 @@ export default {
       if (!message) return;
       this.inputText = message;
       this.$nextTick(() => {
-        this.sendMessage();
+        this.sendMessage({
+          displayText: this.prefillDisplay || message,
+          silentInputClear: true
+        });
       });
     },
     connectChatWS() {
@@ -319,14 +323,17 @@ export default {
       };
       this.ws.onclose = () => { setTimeout(() => this.connectChatWS(), 3000); };
     },
-    sendMessage() {
-      if (!this.inputText.trim() || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
-      this.pendingStatusLabel = this.inferPendingStatus(this.inputText);
+    sendMessage(options = {}) {
+      const actualText = String(this.inputText || '').trim();
+      if (!actualText || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
+      const displayText = String(options.displayText || actualText).trim() || actualText;
+      this.pendingStatusLabel = this.inferPendingStatus(actualText);
       const newMsg = {
         id: Date.now().toString(),
         senderId: 'me',
         targetId: 'ai',
-        text: this.inputText,
+        text: displayText,
+        promptText: actualText,
         time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
       };
       this.isAiTyping = true;

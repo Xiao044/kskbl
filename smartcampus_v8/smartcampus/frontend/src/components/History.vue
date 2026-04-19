@@ -70,8 +70,10 @@
               <td><span class="proto-tag">{{ log.proto }}</span></td>
               <td class="data-col">{{ log.size }}</td>
               <td>
-                <span :class="['status-dot', log.level]"></span>
-                <span :class="['status-text', log.level]">{{ log.status }}</span>
+                <span :class="['status-badge', log.level]">
+                  <span class="status-dot"></span>
+                  <span class="status-label">{{ log.status }}</span>
+                </span>
               </td>
               <td class="data-col">{{ log.packets }}</td>
             </tr>
@@ -338,10 +340,54 @@ td { padding: 15px 20px; border-bottom: 1px solid var(--clay-border-light, #eee9
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 2px 0 rgba(180, 46, 63, 0.9);
 }
 
-.status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; }
-.normal { background: var(--clay-matcha, #078a52); color: var(--clay-matcha, #078a52); }
-.warning { background: var(--clay-lemon, #fbbd41); color: var(--clay-lemon, #fbbd41); }
-.danger { background: var(--clay-pomegranate, #fc7981); color: var(--clay-pomegranate, #fc7981); }
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 28px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+  border: 1px solid transparent;
+}
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+.status-label {
+  position: relative;
+  z-index: 1;
+}
+.status-badge.normal {
+  background: rgba(7, 138, 82, 0.12);
+  color: var(--clay-matcha, #078a52);
+  border-color: rgba(7, 138, 82, 0.18);
+}
+.status-badge.normal .status-dot {
+  background: var(--clay-matcha, #078a52);
+}
+.status-badge.warning {
+  background: rgba(251, 189, 65, 0.16);
+  color: #b77900;
+  border-color: rgba(251, 189, 65, 0.22);
+}
+.status-badge.warning .status-dot {
+  background: var(--clay-lemon, #fbbd41);
+}
+.status-badge.danger {
+  background: rgba(252, 121, 129, 0.14);
+  color: #c84d5e;
+  border-color: rgba(252, 121, 129, 0.2);
+}
+.status-badge.danger .status-dot {
+  background: var(--clay-pomegranate, #fc7981);
+}
 
 .zone-tag-hist { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border: 1px solid var(--clay-border-light, #eee9df); }
 

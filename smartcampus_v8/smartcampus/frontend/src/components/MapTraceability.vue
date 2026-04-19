@@ -84,26 +84,37 @@
                   <div
                     v-for="dot in aggregatedAlertDots"
                     :key="`modal-${dot.id}`"
-                  class="alert-dot"
-                  :class="[
-                    dot.level === 'high' ? 'dot-high' : 'dot-medium',
-                    dot.trafficType === 'internal' ? 'dot-internal' : 'dot-external',
-                    activeDotDetail && activeDotDetail.id === dot.id ? 'is-active-dot' : ''
-                  ]"
-                  :style="{ left: dot.x, top: dot.y }"
-                  @mouseenter="setActiveDot(dot)"
-                >
-                  <span class="dot-core"></span>
-                  <span class="dot-ripple"></span>
-                  <span class="dot-label dot-label-modal" :class="dot.labelSide === 'left' ? 'label-left' : 'label-right'">{{ dot.label }}</span>
+                    class="alert-dot"
+                    :class="[
+                      dot.level === 'high' ? 'dot-high' : 'dot-medium',
+                      dot.trafficType === 'internal' ? 'dot-internal' : 'dot-external',
+                      activeDotDetail && activeDotDetail.id === dot.id ? 'is-active-dot' : ''
+                    ]"
+                    :style="{ left: dot.x, top: dot.y }"
+                    @mouseenter="setActiveDot(dot)"
+                    @click.stop="setActiveDot(dot)"
+                  >
+                    <span class="dot-core"></span>
+                    <span class="dot-ripple"></span>
+                    <span class="dot-label dot-label-modal" :class="dot.labelSide === 'left' ? 'label-left' : 'label-right'">{{ dot.label }}</span>
                   </div>
                 </div>
               </div>
 
               <aside class="modal-side-panel">
                 <div class="panel-header">
-                  <h4 class="panel-title">告警点详情</h4>
-                  <span class="panel-hint">悬停地图圆点以查看</span>
+                  <div class="panel-header__text">
+                    <h4 class="panel-title">告警点详情</h4>
+                    <span class="panel-hint">悬停或点击地图圆点以查看</span>
+                  </div>
+                  <button
+                    v-if="activeDotDetail"
+                    class="panel-action"
+                    type="button"
+                    @click="openIpDetail(activeDotDetail.srcIp)"
+                  >
+                    查看 IP 画像
+                  </button>
                 </div>
 
                 <div v-if="activeDotDetail" class="detail-card">
@@ -124,7 +135,13 @@
                   <div class="detail-grid">
                     <div class="detail-item">
                       <span class="detail-label">来源 IP</span>
-                      <span class="detail-value mono">{{ activeDotDetail.srcIp }}</span>
+                      <button
+                        class="detail-ip-link mono"
+                        type="button"
+                        @click="openIpDetail(activeDotDetail.srcIp)"
+                      >
+                        {{ activeDotDetail.srcIp }}
+                      </button>
                     </div>
                     <div class="detail-item">
                       <span class="detail-label">区域锚点</span>
@@ -146,6 +163,15 @@
                       <span class="detail-label">坐标位置</span>
                       <span class="detail-value mono">{{ activeDotDetail.x }} / {{ activeDotDetail.y }}</span>
                     </div>
+                  </div>
+
+                  <div class="detail-actions">
+                    <button class="detail-action-btn primary" type="button" @click="openIpDetail(activeDotDetail.srcIp)">
+                      跳转独立画像
+                    </button>
+                    <button class="detail-action-btn" type="button" @click="focusDotInMap(activeDotDetail)">
+                      定位当前点
+                    </button>
                   </div>
                 </div>
 
@@ -201,6 +227,7 @@ const MAP_ALIGNMENT_OFFSET = {
 
 export default {
   name: 'MapTraceability',
+  emits: ['view-ip'],
   props: {
     alerts: { type: Array, default: () => [] }
   },
@@ -370,6 +397,13 @@ export default {
         y: `${dot.yValue?.toFixed ? dot.yValue.toFixed(1) : dot.yValue}%`
       };
     },
+    openIpDetail(ip) {
+      if (!ip) return;
+      if (this.showFullscreen) {
+        this.closeFullscreen();
+      }
+      this.$emit('view-ip', ip);
+    },
     resetPreviewViewport() {
       this.$nextTick(() => {
         const pane = this.$refs.previewPane;
@@ -408,6 +442,21 @@ export default {
     },
     zoomReset() {
       this.modalZoom = 1;
+    },
+    focusDotInMap(dot) {
+      if (!dot || !this.showFullscreen) return;
+      const wrapper = this.$refs.modalMapWrapper;
+      if (!wrapper) return;
+
+      this.$nextTick(() => {
+        const centerX = wrapper.scrollWidth * ((dot.xValue || 50) / 100);
+        const centerY = wrapper.scrollHeight * ((dot.yValue || 50) / 100);
+        wrapper.scrollTo({
+          left: Math.max(0, centerX - wrapper.clientWidth / 2),
+          top: Math.max(0, centerY - wrapper.clientHeight / 2),
+          behavior: 'smooth'
+        });
+      });
     },
     startPan(event) {
       if (!this.showFullscreen) return;
@@ -779,6 +828,13 @@ export default {
 
 .panel-header {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.panel-header__text {
+  display: flex;
   flex-direction: column;
   gap: 6px;
 }
@@ -795,6 +851,23 @@ export default {
   font-size: 12px;
   color: var(--clay-text-muted, #9f9b93);
   font-weight: 600;
+}
+
+.panel-action {
+  border: 1px solid rgba(67, 8, 159, 0.16);
+  background: rgba(243, 238, 255, 0.92);
+  color: var(--clay-ube, #43089f);
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.panel-action:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(67, 8, 159, 0.12);
 }
 
 .detail-card {
@@ -916,6 +989,52 @@ export default {
 .detail-value.mono {
   font-family: 'Space Mono', monospace;
   font-size: 13px;
+}
+
+.detail-ip-link {
+  width: fit-content;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--clay-ube, #43089f);
+  font-weight: 700;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.detail-ip-link:hover {
+  color: #2f0a70;
+  transform: translateY(-1px);
+}
+
+.detail-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.detail-action-btn {
+  border: 1px solid rgba(218,212,200,0.6);
+  background: rgba(255,255,255,0.88);
+  color: #55534e;
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.detail-action-btn.primary {
+  background: rgba(243, 238, 255, 0.92);
+  color: var(--clay-ube, #43089f);
+  border-color: rgba(67, 8, 159, 0.14);
+}
+
+.detail-action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
 }
 
 .detail-empty {

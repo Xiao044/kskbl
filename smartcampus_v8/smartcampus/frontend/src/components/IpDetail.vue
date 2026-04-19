@@ -83,22 +83,100 @@
               <button :class="{ active: metricMode === 'packets' }" @click="metricMode = 'packets'">Packets</button>
             </div>
           </div>
-          <div ref="trendChart" class="chart-slot"></div>
-          <div v-if="!hasTrendData" class="chart-empty">暂无趋势数据，等待更多抓包切片积累</div>
+          <div class="chart-slot chart-slot--trend">
+            <svg class="trend-svg" viewBox="0 0 640 260" preserveAspectRatio="none" aria-hidden="true">
+              <line
+                v-for="line in trendGridLines"
+                :key="`grid-${line}`"
+                x1="56"
+                :y1="line"
+                x2="616"
+                :y2="line"
+                class="trend-grid-line"
+              />
+              <polyline :points="trendLinePoints" class="trend-line" />
+              <polyline :points="trendAreaPoints" class="trend-area" />
+              <circle
+                v-for="point in trendChartData.points"
+                :key="`point-${point.label}`"
+                :cx="point.x"
+                :cy="point.y"
+                class="trend-point"
+                r="5"
+              />
+              <text
+                v-for="point in trendChartData.points"
+                :key="`label-${point.label}`"
+                :x="point.x"
+                y="244"
+                text-anchor="middle"
+                class="trend-axis-label"
+              >
+                {{ point.label }}
+              </text>
+            </svg>
+            <div class="trend-summary">
+              <div
+                v-for="point in trendChartData.points"
+                :key="`summary-${point.label}`"
+                class="trend-summary__item"
+              >
+                <span class="trend-summary__time">{{ point.label }}</span>
+                <strong>{{ formatMetricValue(point.value, metricMode) }}</strong>
+              </div>
+            </div>
+          </div>
+          <div v-if="!hasTrendData" class="chart-empty">暂无趋势数据，已切换为占位趋势轮廓。</div>
         </div>
         <div class="chart-card clay-card">
           <div class="card-title-row">
             <h4>协议分布</h4>
             <span class="card-caption">主协议画像</span>
           </div>
-          <div ref="protocolChart" class="chart-slot"></div>
+          <div class="chart-slot chart-slot--distribution">
+            <div class="donut-wrap">
+              <div class="donut-chart" :style="{ background: protocolDonutGradient }">
+                <div class="donut-chart__inner">
+                  <strong>{{ primaryProtocol }}</strong>
+                  <span>协议画像</span>
+                </div>
+              </div>
+            </div>
+            <div class="distribution-list">
+              <div
+                v-for="item in protocolChartData"
+                :key="`proto-${item.name}`"
+                class="distribution-row"
+              >
+                <div class="distribution-row__meta">
+                  <span class="distribution-dot" :style="{ background: item.color }"></span>
+                  <span class="distribution-name">{{ item.name }}</span>
+                </div>
+                <span class="distribution-value">{{ item.percent }}%</span>
+              </div>
+            </div>
+          </div>
         </div>
         <div class="chart-card clay-card">
           <div class="card-title-row">
             <h4>端口分布</h4>
             <span class="card-caption">当前按总活跃度展示</span>
           </div>
-          <div ref="portChart" class="chart-slot"></div>
+          <div class="chart-slot chart-slot--bars">
+            <div
+              v-for="item in portChartData"
+              :key="`port-${item.name}`"
+              class="bar-row"
+            >
+              <div class="bar-row__top">
+                <span class="bar-row__name">{{ item.name }}</span>
+                <span class="bar-row__value">{{ formatMetricValue(item.value, metricMode) }}</span>
+              </div>
+              <div class="bar-row__track">
+                <div class="bar-row__fill" :style="{ width: `${item.percent}%` }"></div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -191,11 +269,7 @@ export default {
         flows: [],
         peer_ips: []
       },
-      metricMode: 'bytes',
-      echarts: null,
-      trendInstance: null,
-      protocolInstance: null,
-      portInstance: null
+      metricMode: 'bytes'
     };
   },
   watch: {
@@ -204,9 +278,6 @@ export default {
       handler() {
         this.fetchDetail();
       }
-    },
-    metricMode() {
-      this.renderCharts();
     }
   },
   computed: {
@@ -233,17 +304,94 @@ export default {
         return '可继续沿端口侧做细查';
       }
       return '当前抓包未保留端口明细，先按整体活跃度观察';
+    },
+    metricUnit() {
+      return this.metricMode === 'bytes' ? 'bytes' : 'packets';
+    },
+    trendChartData() {
+      const fallback = [
+        { label: '切片1', value: 0 },
+        { label: '切片2', value: 0 },
+        { label: '切片3', value: 0 },
+        { label: '切片4', value: 0 }
+      ];
+      const source = (this.detail.trend || []).map((item) => ({
+        label: item.time || '--',
+        value: Number(item[this.metricUnit] || 0)
+      }));
+      const points = (source.length ? source : fallback).slice(-6);
+      const maxValue = Math.max(...points.map((item) => item.value), 1);
+      const chartLeft = 56;
+      const chartTop = 26;
+      const chartWidth = 560;
+      const chartHeight = 176;
+
+      return {
+        points: points.map((item, index) => {
+          const x = points.length === 1
+            ? chartLeft + chartWidth / 2
+            : chartLeft + (chartWidth / (points.length - 1)) * index;
+          const ratio = item.value / maxValue;
+          const y = chartTop + chartHeight - ratio * chartHeight;
+          return { ...item, x, y };
+        })
+      };
+    },
+    trendLinePoints() {
+      return this.trendChartData.points.map((point) => `${point.x},${point.y}`).join(' ');
+    },
+    trendAreaPoints() {
+      const points = this.trendChartData.points;
+      if (!points.length) return '';
+      const start = `${points[0].x},202`;
+      const middle = points.map((point) => `${point.x},${point.y}`).join(' ');
+      const end = `${points[points.length - 1].x},202`;
+      return `${start} ${middle} ${end}`;
+    },
+    trendGridLines() {
+      return [42, 82, 122, 162, 202];
+    },
+    protocolChartData() {
+      const palette = ['#43089f', '#3bd3fd', '#078a52', '#fbbd41', '#fc7981', '#01418d'];
+      const source = (this.detail.protocol_dist || [])
+        .map((item) => ({
+          name: item.name || '未知协议',
+          value: Number(item[this.metricUnit] || 0)
+        }))
+        .filter((item) => item.value > 0);
+      const total = source.reduce((sum, item) => sum + item.value, 0);
+      const normalized = (source.length ? source : [{ name: '待积累协议画像', value: 1 }]).slice(0, 6);
+      const normalizedTotal = normalized.reduce((sum, item) => sum + item.value, 0) || 1;
+      return normalized.map((item, index) => ({
+        ...item,
+        color: palette[index % palette.length],
+        percent: Math.round((item.value / normalizedTotal) * 100)
+      }));
+    },
+    protocolDonutGradient() {
+      let cursor = 0;
+      const segments = this.protocolChartData.map((item) => {
+        const start = cursor;
+        const end = cursor + item.percent;
+        cursor = end;
+        return `${item.color} ${start}% ${end}%`;
+      });
+      return `conic-gradient(${segments.join(', ')})`;
+    },
+    portChartData() {
+      const source = (this.detail.port_dist || [])
+        .map((item) => ({
+          name: item.name || '端口待补充',
+          value: Number(item[this.metricUnit] || 0)
+        }))
+        .filter((item) => item.value > 0);
+      const normalized = (source.length ? source : [{ name: '待积累端口画像', value: 1 }]).slice(0, 6);
+      const maxValue = Math.max(...normalized.map((item) => item.value), 1);
+      return normalized.map((item) => ({
+        ...item,
+        percent: Math.max(12, Math.round((item.value / maxValue) * 100))
+      }));
     }
-  },
-  mounted() {
-    this.$nextTick(this.initCharts);
-    window.addEventListener('resize', this.resizeCharts);
-  },
-  beforeUnmount() {
-    window.removeEventListener('resize', this.resizeCharts);
-    if (this.trendInstance) this.trendInstance.dispose();
-    if (this.protocolInstance) this.protocolInstance.dispose();
-    if (this.portInstance) this.portInstance.dispose();
   },
   methods: {
     defaultDetail() {
@@ -268,15 +416,6 @@ export default {
     },
     resetDetail() {
       this.detail = this.defaultDetail();
-    },
-    async initCharts() {
-      if (this.echarts || !this.$refs.trendChart || !this.$refs.protocolChart || !this.$refs.portChart) return;
-      const echartsModule = await import('echarts');
-      this.echarts = echartsModule;
-      this.trendInstance = echartsModule.init(this.$refs.trendChart);
-      this.protocolInstance = echartsModule.init(this.$refs.protocolChart);
-      this.portInstance = echartsModule.init(this.$refs.portChart);
-      this.renderCharts();
     },
     async fetchDetail() {
       if (!this.selectedIp) {
@@ -311,72 +450,11 @@ export default {
           flows: Array.isArray(payload.flows) ? payload.flows : [],
           peer_ips: Array.isArray(payload.peer_ips) ? payload.peer_ips : []
         };
-        this.$nextTick(() => {
-          this.initCharts();
-          this.renderCharts();
-        });
       } catch (err) {
         this.error = `加载失败: ${err.message || '未知错误'}`;
       } finally {
         this.loading = false;
       }
-    },
-    renderCharts() {
-      if (!this.trendInstance || !this.protocolInstance || !this.portInstance) return;
-
-      const trendData = this.detail.trend || [];
-      const distKey = this.metricMode === 'bytes' ? 'bytes' : 'packets';
-      const unit = this.metricMode === 'bytes' ? 'Bytes' : 'Pkts';
-
-      this.trendInstance.setOption({
-        title: { text: this.selectedIp || '', top: 0, right: 0, textStyle: { color: '#9f9b93', fontSize: 12, fontWeight: 700 } },
-        tooltip: { trigger: 'axis' },
-        grid: { left: '3%', right: '3%', bottom: '3%', top: '12%', containLabel: true },
-        xAxis: { type: 'category', data: trendData.map((item) => item.time || '--'), axisLine: { show: false }, axisTick: { show: false } },
-        yAxis: { type: 'value', name: unit, splitLine: { lineStyle: { color: '#efeae0', type: 'dashed' } } },
-        series: [{
-          type: 'line',
-          smooth: true,
-          symbol: 'circle',
-          symbolSize: 10,
-          lineStyle: { color: '#43089f', width: 3 },
-          itemStyle: { color: '#43089f', borderColor: '#fff', borderWidth: 2 },
-          areaStyle: { color: 'rgba(67, 8, 159, 0.12)' },
-          data: trendData.map((item) => item[distKey] || 0)
-        }]
-      });
-
-      this.protocolInstance.setOption({
-        title: { text: '协议权重', top: 0, right: 0, textStyle: { color: '#9f9b93', fontSize: 12, fontWeight: 700 } },
-        tooltip: { trigger: 'item' },
-        series: [{
-          type: 'pie',
-          radius: ['48%', '74%'],
-          itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
-          label: { formatter: '{b}\n{d}%' },
-          data: (this.detail.protocol_dist || []).map((item) => ({ name: item.name, value: item[distKey] || 0 }))
-        }],
-        color: ['#43089f', '#3bd3fd', '#078a52', '#fbbd41', '#fc7981', '#01418d']
-      });
-
-      this.portInstance.setOption({
-        title: { text: '端口热度', top: 0, right: 0, textStyle: { color: '#9f9b93', fontSize: 12, fontWeight: 700 } },
-        tooltip: { trigger: 'axis' },
-        grid: { left: '3%', right: '3%', bottom: '3%', top: '12%', containLabel: true },
-        xAxis: { type: 'value', splitLine: { lineStyle: { color: '#efeae0', type: 'dashed' } } },
-        yAxis: { type: 'category', data: (this.detail.port_dist || []).map((item) => item.name).reverse(), axisLine: { show: false }, axisTick: { show: false } },
-        series: [{
-          type: 'bar',
-          barWidth: 16,
-          itemStyle: { color: '#fbbd41', borderRadius: [0, 8, 8, 0] },
-          data: (this.detail.port_dist || []).map((item) => item[distKey] || 0).reverse()
-        }]
-      });
-    },
-    resizeCharts() {
-      if (this.trendInstance) this.trendInstance.resize();
-      if (this.protocolInstance) this.protocolInstance.resize();
-      if (this.portInstance) this.portInstance.resize();
     },
     riskText(level) {
       const map = { high: '高风险', medium: '中风险', low: '低风险' };
@@ -391,6 +469,12 @@ export default {
     },
     formatNumber(value) {
       return Number(value || 0).toLocaleString();
+    },
+    formatMetricValue(value, mode) {
+      if (mode === 'bytes') {
+        return this.formatBytes(value);
+      }
+      return `${this.formatNumber(value)} Pkts`;
     }
   }
 }
@@ -424,7 +508,37 @@ export default {
 .risk-text.low { color: #078a52; }
 .chart-grid { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 16px; min-height: 320px; }
 .chart-card, .list-card { padding: 20px; display: flex; flex-direction: column; min-height: 0; }
-.chart-slot { flex: 1; min-height: 240px; }
+.chart-slot { flex: 1; width: 100%; min-height: 260px; }
+.chart-slot--trend { display: flex; flex-direction: column; gap: 14px; }
+.trend-svg { width: 100%; height: 220px; overflow: visible; }
+.trend-grid-line { stroke: rgba(218, 212, 200, 0.55); stroke-width: 1; stroke-dasharray: 4 6; }
+.trend-line { fill: none; stroke: #43089f; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.trend-area { fill: rgba(67, 8, 159, 0.09); stroke: none; }
+.trend-point { fill: #43089f; stroke: #ffffff; stroke-width: 2; }
+.trend-axis-label { fill: #9f9b93; font-size: 11px; font-weight: 700; }
+.trend-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(96px, 1fr)); gap: 10px; }
+.trend-summary__item { padding: 10px 12px; border-radius: 14px; background: rgba(250,249,247,0.82); border: 1px solid rgba(218,212,200,0.35); display: flex; flex-direction: column; gap: 4px; }
+.trend-summary__time { font-size: 11px; color: var(--clay-text-muted, #9f9b93); font-weight: 700; }
+.trend-summary__item strong { font-size: 13px; color: #171717; }
+.chart-slot--distribution { display: flex; flex-direction: column; gap: 18px; justify-content: center; }
+.donut-wrap { display: flex; justify-content: center; }
+.donut-chart { width: 170px; height: 170px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 8px 24px rgba(0,0,0,0.04); }
+.donut-chart__inner { width: 92px; height: 92px; border-radius: 50%; background: rgba(255,255,255,0.92); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; box-shadow: inset 0 1px 0 rgba(255,255,255,0.6); padding: 8px; }
+.donut-chart__inner strong { font-size: 14px; color: #171717; line-height: 1.3; word-break: break-word; }
+.donut-chart__inner span { font-size: 11px; color: var(--clay-text-muted, #9f9b93); font-weight: 700; }
+.distribution-list { display: flex; flex-direction: column; gap: 10px; }
+.distribution-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 14px; background: rgba(250,249,247,0.82); border: 1px solid rgba(218,212,200,0.35); }
+.distribution-row__meta { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.distribution-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.distribution-name { font-size: 12px; font-weight: 700; color: #171717; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.distribution-value { font-size: 12px; font-weight: 800; color: var(--clay-text-secondary, #55534e); }
+.chart-slot--bars { display: flex; flex-direction: column; gap: 14px; justify-content: center; }
+.bar-row { display: flex; flex-direction: column; gap: 8px; }
+.bar-row__top { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.bar-row__name { font-size: 12px; font-weight: 700; color: #171717; }
+.bar-row__value { font-size: 12px; font-weight: 800; color: var(--clay-text-secondary, #55534e); }
+.bar-row__track { height: 12px; border-radius: 999px; background: rgba(218,212,200,0.38); overflow: hidden; }
+.bar-row__fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #fbbd41 0%, #f5d061 100%); box-shadow: inset 0 1px 0 rgba(255,255,255,0.35); }
 .chart-empty { margin-top: 10px; font-size: 12px; color: var(--clay-text-muted, #9f9b93); font-weight: 700; }
 .card-title-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
 .card-title-row h4 { margin: 0; font-size: 18px; color: #171717; }

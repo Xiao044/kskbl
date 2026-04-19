@@ -604,7 +604,7 @@ async def websocket_chat(ws: WebSocket):
             if data.get("targetId") != "ai":
                 continue
 
-            user_text = (data.get("text") or "").strip()
+            user_text = (data.get("promptText") or data.get("text") or "").strip()
             if not user_text:
                 continue
 

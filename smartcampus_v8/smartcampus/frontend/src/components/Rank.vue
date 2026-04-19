@@ -2,11 +2,23 @@
   <div class="rank-inner-container">
     <div class="top-row">
       <div class="chart-box pie-area">
-        <h3 class="box-title">Top-10 节点吞吐占比</h3>
+        <div class="chart-header">
+          <h3 class="box-title">Top-10 节点流量占比</h3>
+          <div class="metric-toggle">
+            <button :class="{ active: metricMode === 'bytes' }" @click="setMetricMode('bytes')">Bytes</button>
+            <button :class="{ active: metricMode === 'packets' }" @click="setMetricMode('packets')">Packets</button>
+          </div>
+        </div>
         <div class="echarts-container" ref="pieChart"></div>
       </div>
       <div class="chart-box bar-area">
-        <h3 class="box-title">实时吞吐强度对比 (Mbps)</h3>
+        <div class="chart-header">
+          <h3 class="box-title">实时流量强度对比</h3>
+          <div class="metric-toggle">
+            <button :class="{ active: metricMode === 'bytes' }" @click="setMetricMode('bytes')">Bytes</button>
+            <button :class="{ active: metricMode === 'packets' }" @click="setMetricMode('packets')">Packets</button>
+          </div>
+        </div>
         <div class="echarts-container" ref="barChart"></div>
       </div>
     </div>
@@ -49,11 +61,11 @@
                 </td>
                 <td>
                   <div class="progress-container">
-                    <div class="progress-bar" :style="{ width: getProgressWidth(item.bytes) + '%' }"></div>
+                    <div class="progress-bar" :style="{ width: getProgressWidth(item) + '%' }"></div>
                   </div>
                 </td>
-                <td class="data-text">{{ formatBytes(item.bytes) }}</td>
-                <td class="data-text">{{ item.packets.toLocaleString() }}</td>
+                <td class="data-text">{{ formatBytes(item.bytes || 0) }}</td>
+                <td class="data-text">{{ Number(item.packets || 0).toLocaleString() }}</td>
               </tr>
             </tbody>
           </table>
@@ -79,13 +91,18 @@ export default {
       loading: false,
       pieInstance: null,
       barInstance: null,
-      timer: null
+      timer: null,
+      metricMode: 'bytes'
     };
+  },
+  watch: {
+    metricMode() {
+      this.updateCharts();
+    }
   },
   mounted() {
     this.initCharts();
     this.fetchTopK();
-    // 每 5 秒自动同步一次 Top-K 数据
     this.timer = setInterval(this.fetchTopK, 5000);
     window.addEventListener('resize', this.handleResize);
   },
@@ -102,14 +119,13 @@ export default {
       
       this.loading = true;
       try {
-        // 🌟 核心修改：动态获取当前服务器的局域网 IP
         const serverIp = window.location.hostname;
         const res = await fetch(`http://${serverIp}:8000/api/topk`, {
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` }
         });
         
         if (res.status === 401) {
-          this.$emit('logout'); 
+          this.$emit('logout');
           return;
         }
         
@@ -117,7 +133,7 @@ export default {
         this.topkList = data.top10 || [];
         this.updateCharts();
       } catch (err) {
-        console.error("排行数据同步失败", err);
+        console.error('排行数据同步失败', err);
       } finally {
         this.loading = false;
       }
@@ -141,10 +157,12 @@ export default {
           trigger: 'item',
           backgroundColor: '#171717',
           textStyle: { color: '#fff' },
-          formatter: (params) => `${params.name}<br/>累计流量: ${this.formatBytes(params.value || 0)}<br/>占比: ${params.percent || 0}%`
+          formatter: (params) => `${params.name}<br/>${this.metricLabel()}: ${this.formatMetricValue(params.value || 0)}<br/>占比: ${params.percent || 0}%`
         },
         series: [{
-          type: 'pie', radius: ['40%', '70%'], avoidLabelOverlap: false,
+          type: 'pie',
+          radius: ['40%', '70%'],
+          avoidLabelOverlap: false,
           itemStyle: { borderRadius: 8, borderColor: '#fff', borderWidth: 2 },
           label: { show: false },
           data: []
@@ -163,11 +181,15 @@ export default {
           textStyle: { color: '#fff' },
           formatter: (params) => {
             const point = Array.isArray(params) ? params[0] : params;
-            return `${point.name}<br/>纵坐标值: ${Number(point.data || 0).toFixed(2)} Mbps`;
+            return `${point.name}<br/>纵坐标值: ${this.formatMetricValue(Number(point.data || 0))}`;
           }
         },
         grid: { left: '3%', right: '4%', bottom: '3%', top: '5%', containLabel: true },
-        xAxis: { type: 'value', splitLine: { lineStyle: { type: 'dashed' } } },
+        xAxis: {
+          type: 'value',
+          axisLabel: { formatter: (value) => this.formatAxisValue(value) },
+          splitLine: { lineStyle: { type: 'dashed' } }
+        },
         yAxis: { type: 'category', data: [], axisLine: { show: false }, axisTick: { show: false } },
         series: [{
           type: 'bar',
@@ -177,12 +199,9 @@ export default {
             position: 'right',
             color: '#171717',
             fontWeight: 700,
-            formatter: ({ value }) => `${Number(value || 0).toFixed(2)} Mbps`
+            formatter: ({ value }) => this.formatMetricValue(Number(value || 0))
           },
-          emphasis: {
-            focus: 'series',
-            label: { show: true }
-          },
+          emphasis: { focus: 'series', label: { show: true } },
           itemStyle: { borderRadius: [0, 6, 6, 0], color: '#43089f' },
           barWidth: '60%'
         }]
@@ -193,22 +212,57 @@ export default {
       }
     },
     updateCharts() {
-      if (!this.topkList.length || !this.pieInstance || !this.barInstance) return;
+      if (!this.pieInstance || !this.barInstance) return;
+      if (!this.topkList.length) {
+        this.pieInstance.setOption({ series: [{ data: [] }] });
+        this.barInstance.setOption({
+          yAxis: { data: [] },
+          series: [{ data: [] }]
+        });
+        return;
+      }
 
-      const pieData = this.topkList.map(item => ({ name: item.src_ip, value: item.bytes }));
+      const pieData = this.topkList.map((item) => ({ name: item.src_ip, value: this.getMetricValue(item) }));
       this.pieInstance.setOption({ series: [{ data: pieData }] });
 
-      const barY = this.topkList.slice(0, 5).reverse().map(item => item.src_ip);
-      const barX = this.topkList.slice(0, 5).reverse().map(item => (item.bytes * 8 / 1024 / 1024).toFixed(2));
+      const barY = this.topkList.slice(0, 5).reverse().map((item) => item.src_ip);
+      const barX = this.topkList.slice(0, 5).reverse().map((item) => this.getMetricValue(item));
       this.barInstance.setOption({
         yAxis: { data: barY },
         series: [{ data: barX }]
       });
     },
-    getProgressWidth(bytes) {
+    setMetricMode(mode) {
+      if (this.metricMode === mode) return;
+      this.metricMode = mode;
+    },
+    metricLabel() {
+      return this.metricMode === 'bytes' ? '累计字节数' : '累计包数';
+    },
+    getMetricValue(item) {
+      return this.metricMode === 'bytes' ? Number(item.bytes || 0) : Number(item.packets || 0);
+    },
+    getProgressWidth(item) {
       if (!this.topkList.length) return 0;
-      const max = this.topkList[0].bytes;
-      return (bytes / max * 100).toFixed(2);
+      const max = Math.max(...this.topkList.map((entry) => this.getMetricValue(entry)), 0);
+      if (!max) return 0;
+      return (this.getMetricValue(item) / max * 100).toFixed(2);
+    },
+    formatPackets(value) {
+      return `${Number(value || 0).toLocaleString()} Pkts`;
+    },
+    formatMetricValue(value) {
+      return this.metricMode === 'bytes' ? this.formatBytes(value) : this.formatPackets(value);
+    },
+    formatAxisValue(value) {
+      const numericValue = Number(value || 0);
+      if (this.metricMode === 'bytes') {
+        return this.formatBytes(numericValue);
+      }
+      if (numericValue >= 1000) {
+        return `${(numericValue / 1000).toFixed(1)}k`;
+      }
+      return `${numericValue}`;
     },
     formatBytes(bytes) {
       if (bytes === 0) return '0 B';
@@ -222,57 +276,39 @@ export default {
       this.barInstance?.resize();
     }
   }
-}
+};
 </script>
 
 <style scoped>
 .rank-inner-container { display: flex; flex-direction: column; gap: 24px; height: 100%; box-sizing: border-box; }
-
 .top-row { display: flex; gap: 24px; height: 320px; }
 .chart-box { flex: 1; background: var(--glass-bg, rgba(255,255,255,0.55)); backdrop-filter: var(--glass-blur, blur(12px)); -webkit-backdrop-filter: var(--glass-blur, blur(12px)); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; border: 1px solid var(--glass-border, rgba(218,212,200,0.4)); box-shadow: var(--glass-shadow, 0 4px 24px rgba(0,0,0,0.04)); }
-.box-title { font-size: 16px; font-weight: 600; color: #000000; margin: 0 0 16px 0; letter-spacing: -0.32px; }
+.box-title { font-size: 16px; font-weight: 600; color: #000000; margin: 0; letter-spacing: -0.32px; }
+.chart-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+.metric-toggle { display: inline-flex; gap: 6px; background: rgba(255,255,255,0.72); border-radius: 999px; padding: 4px; }
+.metric-toggle button { border: none; background: transparent; color: #55534e; border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 800; cursor: pointer; }
+.metric-toggle button.active { background: rgba(243,238,255,0.92); color: var(--clay-ube, #43089f); }
 .echarts-container { flex: 1; width: 100%; }
-
 .bottom-row { flex: 1; min-height: 0; }
 .table-card { background: var(--glass-bg, rgba(255,255,255,0.55)); backdrop-filter: var(--glass-blur, blur(12px)); -webkit-backdrop-filter: var(--glass-blur, blur(12px)); border-radius: 24px; padding: 24px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; border: 1px solid var(--glass-border, rgba(218,212,200,0.4)); box-shadow: var(--glass-shadow, 0 4px 24px rgba(0,0,0,0.04)); }
-
 .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-/* Clay 标志性 Hover 按钮 */
 .refresh-btn { padding: 8px 16px; background: rgba(255,255,255,0.6); border: 1px solid var(--glass-border, rgba(218,212,200,0.4)); border-radius: 12px; font-size: 13px; font-weight: 600; color: #000000; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); font-family: var(--clay-font, 'Roobert', 'Arial', sans-serif); }
 .refresh-btn:hover { transform: rotateZ(-8deg) translateY(-2px); box-shadow: rgb(0,0,0) -7px 7px; background-color: var(--clay-lemon, #fbbd41); color: #ffffff; border-color: var(--clay-lemon, #fbbd41); }
 .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background: #ffffff; color: var(--clay-text-muted, #9f9b93); }
-
 .table-wrapper { flex: 1; overflow-y: auto; }
 table { width: 100%; border-collapse: collapse; }
 th { text-align: left; padding: 12px 16px; font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1; }
 td { padding: 16px; border-bottom: 1px solid var(--clay-border-light, #eee9df); font-size: 14px; vertical-align: middle; }
-
 .rank-num { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--clay-bg, #faf9f7); border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--clay-text-secondary, #55534e); border: 1px solid var(--clay-border, #dad4c8); }
 .rank-num.top-three { background: var(--clay-ube-light, #c1b0ff); color: var(--clay-ube, #43089f); border-color: var(--clay-ube-light, #c1b0ff); }
-
 .ip-text { font-family: 'Space Mono', monospace; font-weight: 600; color: #000000; }
-.ip-link {
-  border: none;
-  background: transparent;
-  padding: 0;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-.ip-link:hover {
-  color: var(--clay-ube, #43089f);
-  transform: translateY(-1px);
-}
+.ip-link { border: none; background: transparent; padding: 0; color: inherit; font: inherit; cursor: pointer; transition: color 0.2s ease, transform 0.2s ease; }
+.ip-link:hover { color: var(--clay-ube, #43089f); transform: translateY(-1px); }
 .proto-tag { display: inline-block; padding: 2px 8px; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border-radius: 999px; font-size: 11px; font-weight: 600; margin-right: 4px; border: 1px solid var(--clay-border-light, #eee9df); }
-
 .progress-container { width: 100%; height: 8px; background: var(--clay-border-light, #eee9df); border-radius: 4px; overflow: hidden; }
 .progress-bar { height: 100%; background: linear-gradient(90deg, var(--clay-ube, #43089f), var(--clay-ube-light, #c1b0ff)); transition: width 0.5s ease; }
-
 .data-text { font-family: 'Space Mono', monospace; color: var(--clay-text-secondary, #55534e); font-size: 13px; }
-
 .empty-state { padding: 60px; text-align: center; color: var(--clay-text-muted, #9f9b93); }
 .empty-icon { font-size: 48px; margin-bottom: 16px; }
-
 .zone-tag-rank { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border: 1px solid var(--clay-border-light, #eee9df); }
 </style>
