@@ -94,6 +94,7 @@
               :alerts="alerts"
               :history-search-seed="historySearchSeed"
               :history-focus-token="historyFocusToken"
+              :history-zone-seed="historyZoneSeed"
             />
           </div>
         </div>
@@ -114,6 +115,7 @@
             @chat-blur="onChatBlur"
             @message-sent="onMessageSent"
             @focus-ip-history="openHistoryForIp"
+            @focus-zone-history="openHistoryForZone"
           />
         </div>
       </div>
@@ -156,6 +158,7 @@ export default {
       pendingFlowData: null,
       pendingAlertsBatch: [],
       historySearchSeed: '',
+      historyZoneSeed: '',
       historyFocusToken: 0,
       currentTime: new Date().toLocaleTimeString(),
       clockTimer: null,
@@ -235,6 +238,16 @@ export default {
     openHistoryForIp(ip) {
       if (!ip || typeof ip !== 'string') return;
       this.historySearchSeed = ip.trim();
+      this.historyZoneSeed = '';
+      this.historyFocusToken += 1;
+      this.currentView = 'History';
+      this.isChatOpen = false;
+      this.chatFocused = false;
+    },
+    openHistoryForZone(zone) {
+      if (!zone || typeof zone !== 'string') return;
+      this.historySearchSeed = '';
+      this.historyZoneSeed = zone.trim();
       this.historyFocusToken += 1;
       this.currentView = 'History';
       this.isChatOpen = false;

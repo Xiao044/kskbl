@@ -75,7 +75,11 @@
 
                 <div class="analysis-card" v-if="msg.analysisMeta.context.current_abnormal_zone">
                   <div class="analysis-card__title">异常区域</div>
-                  <div class="analysis-card__main">{{ msg.analysisMeta.context.current_abnormal_zone.zone || '暂无数据' }}</div>
+                  <button
+                    class="analysis-card__main analysis-link"
+                    type="button"
+                    @click="openHistoryForZone(msg.analysisMeta.context.current_abnormal_zone.zone)"
+                  >{{ msg.analysisMeta.context.current_abnormal_zone.zone || '暂无数据' }}</button>
                   <div class="analysis-card__sub">
                     {{ msg.analysisMeta.context.current_abnormal_zone.mbps || 0 }} Mbps /
                     {{ msg.analysisMeta.context.current_abnormal_zone.packets || 0 }} Pkts
@@ -94,7 +98,8 @@
                   <span class="analysis-event__text">
                     {{ event.type }} /
                     <button class="analysis-inline-link" type="button" @click="openHistoryForIp(event.src_ip)">{{ event.src_ip }}</button>
-                    / {{ event.zone }}
+                    /
+                    <button class="analysis-inline-link" type="button" @click="openHistoryForZone(event.zone)">{{ event.zone }}</button>
                   </span>
                 </div>
               </div>
@@ -164,7 +169,7 @@
 <script>
 export default {
   name: 'Chat',
-  emits: ['chat-focus', 'chat-blur', 'message-sent', 'focus-ip-history'],
+  emits: ['chat-focus', 'chat-blur', 'message-sent', 'focus-ip-history', 'focus-zone-history'],
   data() {
     return {
       ws: null,
@@ -256,6 +261,10 @@ export default {
     openHistoryForIp(ip) {
       if (!ip || typeof ip !== 'string') return;
       this.$emit('focus-ip-history', ip.trim());
+    },
+    openHistoryForZone(zone) {
+      if (!zone || typeof zone !== 'string') return;
+      this.$emit('focus-zone-history', zone.trim());
     },
     inferPendingStatus(text) {
       const normalized = String(text || '').toLowerCase();

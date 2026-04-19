@@ -14,6 +14,9 @@
       </div>
       
       <div class="filter-group">
+        <span v-if="historyZoneSeed" class="zone-filter-chip" :title="`当前按区域筛选: ${historyZoneSeed}`">
+          区域: {{ historyZoneSeed }}
+        </span>
         <select v-model="filterProto">
           <option value="all">所有协议</option>
           <option value="HTTP">HTTP/HTTPS</option>
@@ -98,7 +101,8 @@ export default {
     flow: { type: Array, default: () => [] },
     alerts: { type: Array, default: () => [] },
     historySearchSeed: { type: String, default: '' },
-    historyFocusToken: { type: Number, default: 0 }
+    historyFocusToken: { type: Number, default: 0 },
+    historyZoneSeed: { type: String, default: '' }
   },
   data() {
     return {
@@ -227,7 +231,8 @@ export default {
         const matchSearch = log.src_ip.includes(this.searchQuery) || log.dst_ip.includes(this.searchQuery);
         const matchProto = this.filterProto === 'all' || log.proto.includes(this.filterProto);
         const matchLevel = this.filterLevel === 'all' || log.level === this.filterLevel;
-        return matchSearch && matchProto && matchLevel;
+        const matchZone = !this.historyZoneSeed || (log.src_zone || '').includes(this.historyZoneSeed);
+        return matchSearch && matchProto && matchLevel && matchZone;
       });
     },
     totalPages() {
@@ -241,7 +246,6 @@ export default {
   methods: {
     applyHistorySearchSeed() {
       const nextValue = String(this.historySearchSeed || '').trim();
-      if (!nextValue) return;
       this.searchQuery = nextValue;
       this.currentPage = 1;
     },
@@ -279,6 +283,7 @@ input { width: 100%; padding: 10px 10px 10px 35px; border: 1px solid var(--glass
 input:focus { border-color: rgba(67, 8, 159, 0.3); box-shadow: 0 0 0 3px rgba(193, 176, 255, 0.28); }
 
 .filter-group { display: flex; gap: 12px; }
+.zone-filter-chip { display: inline-flex; align-items: center; padding: 8px 14px; border-radius: 999px; background: rgba(243, 238, 255, 0.88); border: 1px solid rgba(193, 176, 255, 0.42); color: var(--clay-ube, #43089f); font-size: 12px; font-weight: 800; white-space: nowrap; }
 select { padding: 8px 16px; border-radius: 12px; border: 1px solid var(--glass-border, rgba(218,212,200,0.4)); background: rgba(255,255,255,0.6); color: #000000; outline: none; font-family: var(--clay-font, 'Roobert', 'Arial', sans-serif); transition: all 0.25s ease; }
 select:focus { border-color: rgba(67, 8, 159, 0.3); box-shadow: 0 0 0 3px rgba(193, 176, 255, 0.22); }
 
