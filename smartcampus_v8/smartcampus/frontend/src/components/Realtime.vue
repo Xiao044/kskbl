@@ -45,9 +45,11 @@
             <tr v-for="(item, index) in flow" :key="index">
               <td class="ip-src">{{ item.src_ip }}</td>
               <td><span :class="['zone-tag', isExternal(item.src_zone) ? 'ext' : 'int']">{{ item.src_zone || '--' }}</span></td>
-              <td class="ip-dst">
-                <span :class="['status-dot', isInternalIP(item.dst_ip) ? 'safe' : 'warn']"></span>
-                {{ item.dst_ip }}
+              <td>
+                <div class="ip-dst">
+                  <span :class="['status-dot', isInternalIP(item.dst_ip) ? 'safe' : 'warn']"></span>
+                  {{ item.dst_ip }}
+                </div>
               </td>
               <td class="bytes-text">{{ formatBytes(item.bytes) }}</td>
               <td class="packets-text">{{ item.packets }} <span class="unit">pps</span></td>
@@ -275,12 +277,12 @@ export default {
 .table-scroll-area { flex: 1; overflow-y: auto; }
 .table-scroll-area::-webkit-scrollbar { width: 4px; }
 .table-scroll-area::-webkit-scrollbar-thumb { background: var(--clay-border, #dad4c8); border-radius: 4px; }
-table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 14px 16px; color: var(--clay-text-muted, #9f9b93); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10; }
-td { padding: 16px; font-size: 14px; border-bottom: 1px solid var(--clay-border-light, #eee9df); color: #000000; }
+table { width: 100%; border-collapse: collapse; table-layout: auto; }
+th { text-align: left; padding: 14px 16px; color: var(--clay-text-muted, #9f9b93); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10; box-sizing: border-box; background-clip: padding-box; }
+td { padding: 16px; font-size: 14px; border-bottom: 1px solid var(--clay-border-light, #eee9df); color: #000000; vertical-align: middle; box-sizing: border-box; background-clip: padding-box; }
 tr:hover td { background: var(--clay-bg, #faf9f7); }
 .ip-src { color: var(--clay-ube, #43089f); font-family: 'Space Mono', monospace; font-weight: 700; }
-.ip-dst { display: flex; align-items: center; gap: 8px; font-family: 'Space Mono', monospace; color: var(--clay-text-secondary, #55534e); }
+.ip-dst { display: flex; align-items: center; gap: 8px; font-family: 'Space Mono', monospace; color: var(--clay-text-secondary, #55534e); min-width: 0; }
 .status-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
 .safe { background-color: var(--clay-matcha, #078a52); }
 .warn { background-color: var(--clay-lemon, #fbbd41); }

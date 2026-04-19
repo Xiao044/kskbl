@@ -60,11 +60,13 @@
           <tbody>
             <tr v-for="log in paginatedLogs" :key="log.aggregateKey">
               <td class="time-col">{{ log.time }}</td>
-              <td class="path-col">
-                <button class="ip ip-link" type="button" @click="$emit('view-ip', log.src_ip)">{{ log.src_ip }}</button>
-                <span v-if="log.count > 1" class="count-badge" :title="`累计攻击 ${log.count} 次`">x{{ log.count }}</span>
-                <span class="arrow">➔</span>
-                <button class="ip ip-link" type="button" @click="$emit('view-ip', log.dst_ip)">{{ log.dst_ip }}</button>
+              <td>
+                <div class="path-col">
+                  <button class="ip ip-link" type="button" @click="$emit('view-ip', log.src_ip)">{{ log.src_ip }}</button>
+                  <span v-if="log.count > 1" class="count-badge" :title="`累计攻击 ${log.count} 次`">x{{ log.count }}</span>
+                  <span class="arrow">➔</span>
+                  <button class="ip ip-link" type="button" @click="$emit('view-ip', log.dst_ip)">{{ log.dst_ip }}</button>
+                </div>
               </td>
               <td><span class="zone-tag-hist">{{ log.src_zone || '--' }}</span></td>
               <td><span class="proto-tag">{{ log.proto }}</span></td>
@@ -301,12 +303,12 @@ select:focus { border-color: rgba(67, 8, 159, 0.3); box-shadow: 0 0 0 3px rgba(1
 .count { font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; }
 
 .table-wrapper { flex: 1; overflow-y: auto; }
-table { width: 100%; border-collapse: collapse; }
-th { background: rgba(250, 249, 247, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); text-align: left; padding: 15px 20px; font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; z-index: 10; }
-td { padding: 15px 20px; border-bottom: 1px solid var(--clay-border-light, #eee9df); font-size: 14px; color: #000000; }
+table { width: 100%; border-collapse: collapse; table-layout: auto; }
+th { background: rgba(250, 249, 247, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); text-align: left; padding: 15px 20px; font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; z-index: 10; box-sizing: border-box; background-clip: padding-box; }
+td { padding: 15px 20px; border-bottom: 1px solid var(--clay-border-light, #eee9df); font-size: 14px; color: #000000; vertical-align: middle; box-sizing: border-box; background-clip: padding-box; }
 
 .time-col { color: var(--clay-text-muted, #9f9b93); font-family: 'Space Mono', monospace; font-size: 13px; }
-.path-col { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+.path-col { display: flex; align-items: center; gap: 10px; font-weight: 600; min-width: 0; }
 .ip { font-family: 'Space Mono', monospace; }
 .ip-link {
   border: none;

@@ -267,9 +267,9 @@ export default {
 .table-scroll-area::-webkit-scrollbar { width: 4px; }
 .table-scroll-area::-webkit-scrollbar-thumb { background: var(--clay-border, #dad4c8); border-radius: 4px; }
 
-table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 12px 16px; color: var(--clay-text-muted, #9f9b93); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10; }
-td { padding: 16px; font-size: 14px; border-bottom: 1px solid var(--clay-border-light, #eee9df); color: #000000; }
+table { width: 100%; border-collapse: collapse; table-layout: auto; }
+th { text-align: left; padding: 12px 16px; color: var(--clay-text-muted, #9f9b93); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 10; box-sizing: border-box; background-clip: padding-box; }
+td { padding: 16px; font-size: 14px; border-bottom: 1px solid var(--clay-border-light, #eee9df); color: #000000; vertical-align: middle; box-sizing: border-box; background-clip: padding-box; }
 tr:hover td { background: var(--clay-bg, #faf9f7); }
 
 .time-text { color: var(--clay-text-muted, #9f9b93); font-family: 'Space Mono', monospace; font-size: 13px; }

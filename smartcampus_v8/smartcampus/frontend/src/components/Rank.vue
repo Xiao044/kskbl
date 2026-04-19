@@ -296,9 +296,9 @@ export default {
 .refresh-btn:hover { transform: rotateZ(-8deg) translateY(-2px); box-shadow: rgb(0,0,0) -7px 7px; background-color: var(--clay-lemon, #fbbd41); color: #ffffff; border-color: var(--clay-lemon, #fbbd41); }
 .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background: #ffffff; color: var(--clay-text-muted, #9f9b93); }
 .table-wrapper { flex: 1; overflow-y: auto; }
-table { width: 100%; border-collapse: collapse; }
-th { text-align: left; padding: 12px 16px; font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1; }
-td { padding: 16px; border-bottom: 1px solid var(--clay-border-light, #eee9df); font-size: 14px; vertical-align: middle; }
+table { width: 100%; border-collapse: collapse; table-layout: auto; }
+th { text-align: left; padding: 12px 16px; font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1; box-sizing: border-box; background-clip: padding-box; }
+td { padding: 16px; border-bottom: 1px solid var(--clay-border-light, #eee9df); font-size: 14px; vertical-align: middle; box-sizing: border-box; background-clip: padding-box; }
 .rank-num { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--clay-bg, #faf9f7); border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--clay-text-secondary, #55534e); border: 1px solid var(--clay-border, #dad4c8); }
 .rank-num.top-three { background: var(--clay-ube-light, #c1b0ff); color: var(--clay-ube, #43089f); border-color: var(--clay-ube-light, #c1b0ff); }
 .ip-text { font-family: 'Space Mono', monospace; font-weight: 600; color: #000000; }

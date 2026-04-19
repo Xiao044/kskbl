@@ -31,7 +31,8 @@
             class="alert-dot"
             :class="[
               dot.level === 'high' ? 'dot-high' : 'dot-medium',
-              dot.trafficType === 'internal' ? 'dot-internal' : 'dot-external'
+              dot.trafficType === 'internal' ? 'dot-internal' : 'dot-external',
+              activeDotDetail && activeDotDetail.id === dot.id ? 'is-active-dot' : ''
             ]"
             :style="{ left: dot.x, top: dot.y }"
           >
@@ -663,6 +664,22 @@ export default {
   transform: translateY(0);
 }
 
+.is-active-dot {
+  z-index: 9;
+}
+
+.is-active-dot .dot-label {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  background: rgba(243, 238, 255, 0.96);
+  color: var(--clay-ube, #43089f);
+  border-color: rgba(67, 8, 159, 0.18);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.52),
+    0 6px 16px rgba(67, 8, 159, 0.14);
+}
+
 .dot-high.dot-internal .dot-core,
 .dot-medium.dot-internal .dot-core {
   background: #2fd6a3;
@@ -1082,13 +1099,34 @@ export default {
 }
 
 .is-active-dot .dot-core {
-  transform: scale(1.18);
-  box-shadow:
-    inherit,
-    0 0 0 8px rgba(67, 8, 159, 0.08);
+  transform: scale(1.32);
 }
 
-.is-active-dot .dot-ripple {
+.is-active-dot.dot-internal .dot-core {
+  background: #7c5cff;
+  box-shadow:
+    inset 0 -1px 1px rgba(53, 34, 140, 0.38),
+    inset 0 1px 1px rgba(236, 229, 255, 0.92),
+    0 0 0 6px rgba(124, 92, 255, 0.2),
+    0 0 18px rgba(124, 92, 255, 0.42);
+}
+
+.is-active-dot.dot-external .dot-core {
+  background: #ff8c42;
+  box-shadow:
+    inset 0 -1px 1px rgba(148, 73, 12, 0.34),
+    inset 0 1px 1px rgba(255, 239, 221, 0.94),
+    0 0 0 6px rgba(255, 140, 66, 0.22),
+    0 0 18px rgba(255, 140, 66, 0.44);
+}
+
+.is-active-dot.dot-internal .dot-ripple {
+  border: 2px solid rgba(124, 92, 255, 0.6);
+  animation-duration: 1.15s;
+}
+
+.is-active-dot.dot-external .dot-ripple {
+  border: 2px solid rgba(255, 140, 66, 0.62);
   animation-duration: 1.15s;
 }
 
