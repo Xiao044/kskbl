@@ -27,6 +27,79 @@
             <span class="time">{{ msg.time }}</span>
           </div>
           <div class="bubble" :class="{ 'bubble-system': msg.senderId === 'system' }">{{ msg.text }}</div>
+
+          <div v-if="msg.senderId === 'ai' && hasAnalysisMeta(msg)" class="analysis-panel">
+            <div class="analysis-section">
+              <div class="analysis-title">当前态势依据</div>
+              <div class="analysis-kpis">
+                <div class="analysis-kpi">
+                  <span class="analysis-kpi__label">高危告警</span>
+                  <strong>{{ msg.analysisMeta.context.high_risk_count || 0 }}</strong>
+                </div>
+                <div class="analysis-kpi">
+                  <span class="analysis-kpi__label">中危告警</span>
+                  <strong>{{ msg.analysisMeta.context.medium_risk_count || 0 }}</strong>
+                </div>
+                <div class="analysis-kpi">
+                  <span class="analysis-kpi__label">近期告警</span>
+                  <strong>{{ msg.analysisMeta.context.recent_alert_count || 0 }}</strong>
+                </div>
+              </div>
+
+              <div class="analysis-grid">
+                <div class="analysis-card" v-if="msg.analysisMeta.context.current_top_talker">
+                  <div class="analysis-card__title">Top Talker</div>
+                  <div class="analysis-card__main">{{ msg.analysisMeta.context.current_top_talker.src_ip || '暂无数据' }}</div>
+                  <div class="analysis-card__sub">
+                    {{ msg.analysisMeta.context.current_top_talker.bytes || 0 }} Bytes /
+                    {{ msg.analysisMeta.context.current_top_talker.packets || 0 }} Pkts
+                  </div>
+                </div>
+
+                <div class="analysis-card" v-if="msg.analysisMeta.context.current_abnormal_zone">
+                  <div class="analysis-card__title">异常区域</div>
+                  <div class="analysis-card__main">{{ msg.analysisMeta.context.current_abnormal_zone.zone || '暂无数据' }}</div>
+                  <div class="analysis-card__sub">
+                    {{ msg.analysisMeta.context.current_abnormal_zone.mbps || 0 }} Mbps /
+                    {{ msg.analysisMeta.context.current_abnormal_zone.packets || 0 }} Pkts
+                  </div>
+                </div>
+              </div>
+
+              <div v-if="hasHighRiskEvents(msg)" class="analysis-events">
+                <div class="analysis-title analysis-title--small">最近 3 条高危事件</div>
+                <div
+                  v-for="(event, index) in msg.analysisMeta.context.latest_high_risk_events"
+                  :key="`${msg.id}-event-${index}`"
+                  class="analysis-event"
+                >
+                  <span class="analysis-event__time">{{ event.time }}</span>
+                  <span class="analysis-event__text">{{ event.type }} / {{ event.src_ip }} / {{ event.zone }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div v-if="hasToolCalls(msg)" class="analysis-section">
+              <div class="analysis-title">本轮工具调用</div>
+              <div
+                v-for="(tool, index) in msg.analysisMeta.tool_calls"
+                :key="`${msg.id}-tool-${index}`"
+                class="tool-card"
+              >
+                <div class="tool-card__header">
+                  <span class="tool-card__name">{{ tool.label || tool.name }}</span>
+                  <span class="tool-card__args">{{ formatToolArguments(tool.arguments) }}</span>
+                </div>
+                <div
+                  v-for="(line, lineIndex) in tool.summary || []"
+                  :key="`${msg.id}-tool-${index}-line-${lineIndex}`"
+                  class="tool-card__line"
+                >
+                  {{ line }}
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -77,7 +150,8 @@ export default {
           senderId: 'ai',
           targetId: 'me',
           text: '您好！我是 DeepSeek 运维助理。我已接入当前底层探针数据，您可以随时向我询问异常研判或防御策略。',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          analysisMeta: null
         }
       ]
     }
@@ -95,6 +169,28 @@ export default {
       if (msg.senderId === 'system') return 'System';
       return msg.senderName || 'DeepSeek';
     },
+    hasAnalysisMeta(msg) {
+      return !!(msg && msg.analysisMeta && msg.analysisMeta.context);
+    },
+    hasHighRiskEvents(msg) {
+      return !!(
+        this.hasAnalysisMeta(msg) &&
+        Array.isArray(msg.analysisMeta.context.latest_high_risk_events) &&
+        msg.analysisMeta.context.latest_high_risk_events.length
+      );
+    },
+    hasToolCalls(msg) {
+      return !!(
+        this.hasAnalysisMeta(msg) &&
+        Array.isArray(msg.analysisMeta.tool_calls) &&
+        msg.analysisMeta.tool_calls.length
+      );
+    },
+    formatToolArguments(args) {
+      const entries = Object.entries(args || {});
+      if (!entries.length) return '默认参数';
+      return entries.map(([key, value]) => `${key}: ${value}`).join(' / ');
+    },
     inferPendingStatus(text) {
       const normalized = String(text || '').toLowerCase();
       if (/(top|排行|topk|top talker)/.test(normalized)) return 'AI 正在查询 Top-K 流量节点...';
@@ -110,7 +206,10 @@ export default {
 
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
-        this.messages.push(data);
+        this.messages.push({
+          ...data,
+          analysisMeta: data.analysisMeta || null
+        });
         if (data.senderId === 'ai' || data.senderId === 'system') this.isAiTyping = false;
         this.scrollToBottom();
       };
@@ -141,7 +240,8 @@ export default {
           text: startFresh
             ? '新对话已开始。您可以继续询问当前高危告警、top talker、异常区域或某个 IP 的历史记录。'
             : '上下文已清空。您可以从当前系统态势重新开始提问。',
-          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+          analysisMeta: null
         }
       ];
       this.isAiTyping = false;
@@ -199,6 +299,29 @@ export default {
 .is-ai .bubble { border-top-left-radius: 4px; }
 .bubble-system { background: rgba(243, 238, 255, 0.72); color: var(--clay-ube, #43089f); border-color: rgba(193, 176, 255, 0.45); }
 
+.analysis-panel { display: flex; flex-direction: column; gap: 12px; margin-top: 6px; }
+.analysis-section { background: rgba(255, 255, 255, 0.58); border: 1px solid rgba(218,212,200,0.45); border-radius: 18px; padding: 14px; box-shadow: inset 0 1px 0 rgba(255,255,255,0.55); }
+.analysis-title { font-size: 12px; font-weight: 800; color: #171717; margin-bottom: 10px; }
+.analysis-title--small { margin-bottom: 8px; }
+.analysis-kpis { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.analysis-kpi { padding: 10px 12px; border-radius: 14px; background: rgba(250, 249, 247, 0.92); border: 1px solid rgba(218,212,200,0.38); display: flex; flex-direction: column; gap: 4px; }
+.analysis-kpi__label { font-size: 11px; color: var(--clay-text-muted, #9f9b93); font-weight: 700; }
+.analysis-kpi strong { font-size: 16px; color: #171717; }
+.analysis-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-bottom: 10px; }
+.analysis-card { padding: 12px; border-radius: 16px; background: linear-gradient(180deg, rgba(255,255,255,0.9), rgba(247,244,239,0.82)); border: 1px solid rgba(218,212,200,0.38); }
+.analysis-card__title { font-size: 11px; color: var(--clay-text-muted, #9f9b93); font-weight: 800; text-transform: uppercase; letter-spacing: 0.04em; }
+.analysis-card__main { margin-top: 6px; font-size: 14px; font-weight: 800; color: #171717; word-break: break-all; }
+.analysis-card__sub { margin-top: 4px; font-size: 12px; color: var(--clay-text-secondary, #55534e); }
+.analysis-events { display: flex; flex-direction: column; gap: 8px; }
+.analysis-event { display: flex; gap: 8px; align-items: flex-start; font-size: 12px; line-height: 1.5; color: var(--clay-text-secondary, #55534e); }
+.analysis-event__time { flex-shrink: 0; padding: 2px 8px; border-radius: 999px; background: rgba(243, 238, 255, 0.86); color: var(--clay-ube, #43089f); font-family: 'Space Mono', monospace; font-size: 11px; }
+.analysis-event__text { word-break: break-word; }
+.tool-card { padding: 12px; border-radius: 16px; background: rgba(250, 249, 247, 0.92); border: 1px solid rgba(218,212,200,0.38); display: flex; flex-direction: column; gap: 6px; }
+.tool-card__header { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
+.tool-card__name { font-size: 12px; font-weight: 800; color: #171717; }
+.tool-card__args { font-size: 11px; color: var(--clay-text-muted, #9f9b93); }
+.tool-card__line { font-size: 12px; color: var(--clay-text-secondary, #55534e); line-height: 1.5; }
+
 .typing-bubble { display: flex; gap: 4px; align-items: center; padding: 16px; }
 .typing-label { font-size: 12px; font-weight: 700; color: var(--clay-text-secondary, #55534e); margin-right: 8px; }
 .dot-bounce { width: 6px; height: 6px; background: var(--clay-text-muted, #9f9b93); border-radius: 50%; animation: bounce 1.4s infinite ease-in-out both; }
@@ -216,4 +339,11 @@ input::placeholder { color: var(--clay-text-muted, #9f9b93); }
 .btn-send { display: flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: #000000; color: #ffffff; border: 1px solid #000000; border-radius: 50%; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); flex-shrink: 0; }
 .btn-send:hover:not(:disabled) { transform: rotateZ(-8deg) translateY(-2px); box-shadow: rgb(0,0,0) -7px 7px; background-color: var(--clay-lemon, #fbbd41); border-color: var(--clay-lemon, #fbbd41); }
 .btn-send:disabled { background: var(--clay-border, #dad4c8); color: var(--clay-text-muted, #9f9b93); border-color: var(--clay-border, #dad4c8); cursor: not-allowed; }
+
+@media (max-width: 900px) {
+  .analysis-kpis,
+  .analysis-grid {
+    grid-template-columns: 1fr;
+  }
+}
 </style>

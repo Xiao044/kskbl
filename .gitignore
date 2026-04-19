@@ -1,0 +1,15 @@
+# 忽略 Python 缓存
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 忽略前端依赖包
+node_modules/
+
+# 忽略你提到的特定路径下的文件
+smartcampus_v8/smartcampus/backend/__pycache__/
+smartcampus_v8/smartcampus/frontend/node_modules/
+
+# 忽略之前导致报错的大型抓包文件
+*.pcap
+sample.pcap
