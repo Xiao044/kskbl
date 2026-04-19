@@ -56,7 +56,7 @@
         <div class="chart-card clay-card trend-card">
           <div class="chart-header">
             <h3 class="chart-title">全网吞吐量宏观波动</h3>
-            <div class="metric-toggle">
+            <div class="ui-metric-toggle">
               <button :class="{ active: metricMode === 'bytes' }" @click="setMetricMode('bytes')">Bytes</button>
               <button :class="{ active: metricMode === 'packets' }" @click="setMetricMode('packets')">Packets</button>
             </div>
@@ -70,7 +70,7 @@
       <div class="chart-card clay-card flex-3">
         <div class="chart-header">
           <h3 class="chart-title">流量协议画像</h3>
-          <div class="metric-toggle">
+          <div class="ui-metric-toggle">
             <button :class="{ active: metricMode === 'bytes' }" @click="setMetricMode('bytes')">Bytes</button>
             <button :class="{ active: metricMode === 'packets' }" @click="setMetricMode('packets')">Packets</button>
           </div>
@@ -81,7 +81,7 @@
       <div class="chart-card clay-card flex-4">
         <div class="chart-header">
           <h3 class="chart-title">区域流量透视</h3>
-          <div class="metric-toggle">
+          <div class="ui-metric-toggle">
             <button :class="{ active: metricMode === 'bytes' }" @click="setMetricMode('bytes')">Bytes</button>
             <button :class="{ active: metricMode === 'packets' }" @click="setMetricMode('packets')">Packets</button>
           </div>
@@ -462,9 +462,6 @@ export default {
 .chart-card { background: var(--glass-bg, rgba(255,255,255,0.55)); backdrop-filter: var(--glass-blur, blur(12px)); -webkit-backdrop-filter: var(--glass-blur, blur(12px)); border-radius: 24px; padding: 24px; box-sizing: border-box; display: flex; flex-direction: column; border: 1px solid var(--glass-border, rgba(218,212,200,0.4)); box-shadow: var(--glass-shadow, 0 4px 24px rgba(0,0,0,0.04)); }
 .chart-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .chart-title { margin: 0; color: #171717; font-size: 16px; font-weight: 700; }
-.metric-toggle { display: inline-flex; gap: 6px; background: rgba(255,255,255,0.72); border-radius: 999px; padding: 4px; }
-.metric-toggle button { border: none; background: transparent; color: #55534e; border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 800; cursor: pointer; }
-.metric-toggle button.active { background: rgba(243,238,255,0.92); color: var(--clay-ube, #43089f); }
 .flex-3 { flex: 3; }
 .flex-4 { flex: 4; }
 .echarts-inner { width: 100%; height: 100%; flex: 1; }

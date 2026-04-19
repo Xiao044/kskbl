@@ -11,6 +11,42 @@ from core import (
     MAX_RECENT_ALERTS, MAX_FLOW_HISTORY
 )
 
+
+def _new_flow_stats():
+    return {
+        "bytes": 0,
+        "packets": 0,
+        "protocols": set(),
+        "port_stats": defaultdict(lambda: {"bytes": 0, "packets": 0}),
+    }
+
+
+def _serialize_flow(flow_key, stats):
+    src_ip, dst_ip = flow_key
+    port_stats = sorted(
+        [
+            {"port": port, "bytes": values["bytes"], "packets": values["packets"]}
+            for port, values in stats.get("port_stats", {}).items()
+        ],
+        key=lambda item: item["bytes"],
+        reverse=True
+    )[:8]
+
+    return {
+        "src_ip": src_ip,
+        "dst_ip": dst_ip,
+        "bytes": stats["bytes"],
+        "packets": stats["packets"],
+        "protocols": list(stats["protocols"]),
+        "src_zone": lookup_zone(src_ip)["zone"],
+        "src_building": lookup_zone(src_ip)["building"],
+        "dst_zone": lookup_zone(dst_ip)["zone"],
+        "dst_building": lookup_zone(dst_ip)["building"],
+        "port_stats": port_stats,
+        "src_port": port_stats[0]["port"] if port_stats else None,
+        "dst_port": port_stats[0]["port"] if port_stats else None,
+    }
+
 def identify_protocol(ip_data, sport, dport):
     """双引擎协议识别：L4 端口映射 + L7 DPI 深度包检测"""
     if dport in PROTOCOL_MAP: return PROTOCOL_MAP[dport]
@@ -41,7 +77,7 @@ def parse_pcap_worker(file_path: str):
                     f.seek(0)
                     pcap = dpkt.pcapng.Reader(f)
                 
-                window_flows = defaultdict(lambda: {"bytes": 0, "packets": 0, "protocols": set()})
+                window_flows = defaultdict(_new_flow_stats)
                 total_flows = LRUCache(maxsize=MAX_TOTAL_FLOWS)
                 
                 current_window_start = None
@@ -87,6 +123,8 @@ def parse_pcap_worker(file_path: str):
                         except: continue
                             
                         proto_name = "Other"
+                        sport = None
+                        dport = None
                         if isinstance(ip.data, dpkt.tcp.TCP) or isinstance(ip.data, dpkt.udp.UDP):
                             sport = ip.data.sport
                             dport = ip.data.dport
@@ -96,13 +134,34 @@ def parse_pcap_worker(file_path: str):
                         window_flows[flow_key]["bytes"] += length
                         window_flows[flow_key]["packets"] += 1
                         window_flows[flow_key]["protocols"].add(proto_name)
+                        if sport is not None:
+                            window_flows[flow_key]["port_stats"][sport]["bytes"] += length
+                            window_flows[flow_key]["port_stats"][sport]["packets"] += 1
+                        if dport is not None and dport != sport:
+                            window_flows[flow_key]["port_stats"][dport]["bytes"] += length
+                            window_flows[flow_key]["port_stats"][dport]["packets"] += 1
 
                         if flow_key in total_flows:
                             total_flows[flow_key]["bytes"] += length
                             total_flows[flow_key]["packets"] += 1
                             total_flows[flow_key]["protocols"].add(proto_name)
+                            if sport is not None:
+                                total_flows[flow_key]["port_stats"][sport]["bytes"] += length
+                                total_flows[flow_key]["port_stats"][sport]["packets"] += 1
+                            if dport is not None and dport != sport:
+                                total_flows[flow_key]["port_stats"][dport]["bytes"] += length
+                                total_flows[flow_key]["port_stats"][dport]["packets"] += 1
                         else:
-                            total_flows[flow_key] = {"bytes": length, "packets": 1, "protocols": {proto_name}}
+                            total_flows[flow_key] = _new_flow_stats()
+                            total_flows[flow_key]["bytes"] = length
+                            total_flows[flow_key]["packets"] = 1
+                            total_flows[flow_key]["protocols"].add(proto_name)
+                            if sport is not None:
+                                total_flows[flow_key]["port_stats"][sport]["bytes"] += length
+                                total_flows[flow_key]["port_stats"][sport]["packets"] += 1
+                            if dport is not None and dport != sport:
+                                total_flows[flow_key]["port_stats"][dport]["bytes"] += length
+                                total_flows[flow_key]["port_stats"][dport]["packets"] += 1
                         
                         packet_count += 1
                     
@@ -146,31 +205,17 @@ def parse_pcap_worker(file_path: str):
                                 window_alerts.append({"time": now_str, "icon": "🔓", "type": "未知加密隧道外发", "src_ip": s_ip, "dst_ip": d_ip, "src_zone": lookup_zone(s_ip)["zone"], "geo": lookup_geo(s_ip), "bytes": byts, "packets": pkts, "target": "Unknown", "level": "high", "category": "数据外泄"})
 
                         # --- 推送数据 ---
-                        current_data = sorted([
-                            {
-                                "src_ip": k[0], "dst_ip": k[1],
-                                "bytes": v["bytes"], "packets": v["packets"],
-                                "protocols": list(v["protocols"]),
-                                "src_zone": lookup_zone(k[0])["zone"],
-                                "src_building": lookup_zone(k[0])["building"],
-                                "dst_zone": lookup_zone(k[1])["zone"],
-                                "dst_building": lookup_zone(k[1])["building"],
-                            }
-                            for k, v in window_flows.items()
-                        ], key=lambda x: x["bytes"], reverse=True)[:10]
+                        current_data = sorted(
+                            [_serialize_flow(k, v) for k, v in window_flows.items()],
+                            key=lambda x: x["bytes"],
+                            reverse=True
+                        )[:10]
 
-                        topk_data = sorted([
-                            {
-                                "src_ip": k[0], "dst_ip": k[1],
-                                "bytes": v["bytes"], "packets": v["packets"],
-                                "protocols": list(v["protocols"]),
-                                "src_zone": lookup_zone(k[0])["zone"],
-                                "src_building": lookup_zone(k[0])["building"],
-                                "dst_zone": lookup_zone(k[1])["zone"],
-                                "dst_building": lookup_zone(k[1])["building"],
-                            }
-                            for k, v in total_flows.items()
-                        ], key=lambda x: x["bytes"], reverse=True)[:10]
+                        topk_data = sorted(
+                            [_serialize_flow(k, v) for k, v in total_flows.items()],
+                            key=lambda x: x["bytes"],
+                            reverse=True
+                        )[:10]
 
                         try:
                             playback_queue.put_nowait({

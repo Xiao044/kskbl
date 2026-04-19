@@ -2,15 +2,15 @@
   <div class="ip-detail-page">
     <div class="detail-toolbar clay-card">
       <div class="detail-toolbar__left">
-        <button class="back-btn" type="button" @click="$emit('back')">返回</button>
+        <button class="back-btn ui-action-btn" type="button" @click="$emit('back')">返回</button>
         <div>
           <div class="detail-label">IP 独立画像看板</div>
           <h3 class="detail-title">{{ selectedIp || '未选择 IP' }}</h3>
         </div>
       </div>
       <div class="detail-toolbar__right" v-if="selectedIp">
-        <button class="ghost-btn" type="button" @click="$emit('analyze-ip', selectedIp)">交给 AI 分析</button>
-        <button class="ghost-btn" type="button" @click="$emit('view-history', selectedIp)">查看历史检索</button>
+        <button class="ghost-btn ui-action-btn ui-action-btn--ghost" type="button" @click="$emit('analyze-ip', selectedIp)">交给 AI 分析</button>
+        <button class="ghost-btn ui-action-btn ui-action-btn--ghost" type="button" @click="$emit('view-history', selectedIp)">查看历史检索</button>
       </div>
     </div>
 
@@ -78,7 +78,7 @@
         <div class="chart-card clay-card">
           <div class="card-title-row">
             <h4>流量趋势</h4>
-            <div class="metric-toggle">
+            <div class="ui-metric-toggle">
               <button :class="{ active: metricMode === 'bytes' }" @click="metricMode = 'bytes'">Bytes</button>
               <button :class="{ active: metricMode === 'packets' }" @click="metricMode = 'packets'">Packets</button>
             </div>
@@ -487,8 +487,6 @@ export default {
 .detail-toolbar__left, .detail-toolbar__right { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .detail-label { font-size: 12px; color: var(--clay-text-muted, #9f9b93); font-weight: 800; }
 .detail-title { margin: 4px 0 0; font-size: 24px; color: #171717; }
-.back-btn, .ghost-btn { border: 1px solid rgba(218,212,200,0.45); background: rgba(255,255,255,0.82); color: #171717; border-radius: 999px; padding: 10px 16px; font-size: 12px; font-weight: 800; cursor: pointer; }
-.ghost-btn { background: rgba(243,238,255,0.9); color: var(--clay-ube, #43089f); }
 .placeholder { padding: 32px; font-size: 14px; color: var(--clay-text-secondary, #55534e); }
 .overview-panel { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; padding: 18px 20px; }
 .overview-item { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border-radius: 18px; background: rgba(250,249,247,0.74); border: 1px solid rgba(218,212,200,0.32); }
@@ -543,9 +541,6 @@ export default {
 .card-title-row { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
 .card-title-row h4 { margin: 0; font-size: 18px; color: #171717; }
 .card-caption { font-size: 11px; color: var(--clay-text-muted, #9f9b93); font-weight: 700; }
-.metric-toggle { display: inline-flex; gap: 6px; background: rgba(255,255,255,0.72); border-radius: 999px; padding: 4px; }
-.metric-toggle button { border: none; background: transparent; color: #55534e; border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 800; cursor: pointer; }
-.metric-toggle button.active { background: rgba(243,238,255,0.92); color: var(--clay-ube, #43089f); }
 .detail-grid { display: grid; grid-template-columns: 1.2fr 1.2fr 1fr; gap: 16px; min-height: 0; flex: 1; }
 .list-body { overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
 .list-item { padding: 14px; border-radius: 18px; background: rgba(250,249,247,0.88); border: 1px solid rgba(218,212,200,0.38); }

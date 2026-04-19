@@ -4,7 +4,7 @@
       <div class="chart-box pie-area">
         <div class="chart-header">
           <h3 class="box-title">Top-10 节点流量占比</h3>
-          <div class="metric-toggle">
+          <div class="ui-metric-toggle">
             <button :class="{ active: metricMode === 'bytes' }" @click="setMetricMode('bytes')">Bytes</button>
             <button :class="{ active: metricMode === 'packets' }" @click="setMetricMode('packets')">Packets</button>
           </div>
@@ -14,7 +14,7 @@
       <div class="chart-box bar-area">
         <div class="chart-header">
           <h3 class="box-title">实时流量强度对比</h3>
-          <div class="metric-toggle">
+          <div class="ui-metric-toggle">
             <button :class="{ active: metricMode === 'bytes' }" @click="setMetricMode('bytes')">Bytes</button>
             <button :class="{ active: metricMode === 'packets' }" @click="setMetricMode('packets')">Packets</button>
           </div>
@@ -27,13 +27,13 @@
       <div class="table-card">
         <div class="table-header">
           <h3 class="box-title">全网流量大户溯源清单 (Top-10)</h3>
-          <button class="refresh-btn" @click="fetchTopK" :disabled="loading">
+          <button class="refresh-btn ui-action-btn" @click="fetchTopK" :disabled="loading">
             {{ loading ? '同步中...' : '手动刷新' }}
           </button>
         </div>
         
-        <div class="table-wrapper">
-          <table v-if="topkList.length">
+        <div class="table-wrapper ui-table-scroll">
+          <table v-if="topkList.length" class="ui-data-table">
             <thead>
               <tr>
                 <th width="60">排名</th>
@@ -50,11 +50,11 @@
               <tr v-for="(item, index) in topkList" :key="index">
                 <td><span :class="['rank-num', index < 3 ? 'top-three' : '']">{{ index + 1 }}</span></td>
                 <td class="ip-text">
-                  <button class="ip-link" type="button" @click="$emit('view-ip', item.src_ip)">{{ item.src_ip }}</button>
+                  <button class="ip-link ui-ip-link" type="button" @click="$emit('view-ip', item.src_ip)">{{ item.src_ip }}</button>
                 </td>
-                <td><span class="zone-tag-rank">{{ item.src_zone || '--' }}</span></td>
+                <td><span class="zone-tag-rank ui-pill-tag ui-pill-tag--blue">{{ item.src_zone || '--' }}</span></td>
                 <td class="ip-text">
-                  <button class="ip-link" type="button" @click="$emit('view-ip', item.dst_ip)">{{ item.dst_ip }}</button>
+                  <button class="ip-link ui-ip-link" type="button" @click="$emit('view-ip', item.dst_ip)">{{ item.dst_ip }}</button>
                 </td>
                 <td>
                   <span class="proto-tag" v-for="p in item.protocols" :key="p">{{ p }}</span>
@@ -285,30 +285,21 @@ export default {
 .chart-box { flex: 1; background: var(--glass-bg, rgba(255,255,255,0.55)); backdrop-filter: var(--glass-blur, blur(12px)); -webkit-backdrop-filter: var(--glass-blur, blur(12px)); border-radius: 24px; padding: 24px; display: flex; flex-direction: column; border: 1px solid var(--glass-border, rgba(218,212,200,0.4)); box-shadow: var(--glass-shadow, 0 4px 24px rgba(0,0,0,0.04)); }
 .box-title { font-size: 16px; font-weight: 600; color: #000000; margin: 0; letter-spacing: -0.32px; }
 .chart-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.metric-toggle { display: inline-flex; gap: 6px; background: rgba(255,255,255,0.72); border-radius: 999px; padding: 4px; }
-.metric-toggle button { border: none; background: transparent; color: #55534e; border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 800; cursor: pointer; }
-.metric-toggle button.active { background: rgba(243,238,255,0.92); color: var(--clay-ube, #43089f); }
 .echarts-container { flex: 1; width: 100%; }
 .bottom-row { flex: 1; min-height: 0; }
 .table-card { background: var(--glass-bg, rgba(255,255,255,0.55)); backdrop-filter: var(--glass-blur, blur(12px)); -webkit-backdrop-filter: var(--glass-blur, blur(12px)); border-radius: 24px; padding: 24px; height: 100%; display: flex; flex-direction: column; box-sizing: border-box; border: 1px solid var(--glass-border, rgba(218,212,200,0.4)); box-shadow: var(--glass-shadow, 0 4px 24px rgba(0,0,0,0.04)); }
 .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-.refresh-btn { padding: 8px 16px; background: rgba(255,255,255,0.6); border: 1px solid var(--glass-border, rgba(218,212,200,0.4)); border-radius: 12px; font-size: 13px; font-weight: 600; color: #000000; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); font-family: var(--clay-font, 'Roobert', 'Arial', sans-serif); }
-.refresh-btn:hover { transform: rotateZ(-8deg) translateY(-2px); box-shadow: rgb(0,0,0) -7px 7px; background-color: var(--clay-lemon, #fbbd41); color: #ffffff; border-color: var(--clay-lemon, #fbbd41); }
 .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none; background: #ffffff; color: var(--clay-text-muted, #9f9b93); }
 .table-wrapper { flex: 1; overflow-y: auto; }
-table { width: 100%; border-collapse: collapse; table-layout: auto; }
-th { text-align: left; padding: 12px 16px; font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1; box-sizing: border-box; background-clip: padding-box; }
-td { padding: 16px; border-bottom: 1px solid var(--clay-border-light, #eee9df); font-size: 14px; vertical-align: middle; box-sizing: border-box; background-clip: padding-box; }
+.ui-data-table th { padding: 12px 16px; font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); background: rgba(255,255,255,0.85); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); z-index: 1; }
+.ui-data-table td { padding: 16px; border-bottom: 1px solid var(--clay-border-light, #eee9df); font-size: 14px; }
 .rank-num { width: 24px; height: 24px; display: flex; align-items: center; justify-content: center; background: var(--clay-bg, #faf9f7); border-radius: 6px; font-size: 12px; font-weight: 700; color: var(--clay-text-secondary, #55534e); border: 1px solid var(--clay-border, #dad4c8); }
 .rank-num.top-three { background: var(--clay-ube-light, #c1b0ff); color: var(--clay-ube, #43089f); border-color: var(--clay-ube-light, #c1b0ff); }
 .ip-text { font-family: 'Space Mono', monospace; font-weight: 600; color: #000000; }
-.ip-link { border: none; background: transparent; padding: 0; color: inherit; font: inherit; cursor: pointer; transition: color 0.2s ease, transform 0.2s ease; }
-.ip-link:hover { color: var(--clay-ube, #43089f); transform: translateY(-1px); }
 .proto-tag { display: inline-block; padding: 2px 8px; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border-radius: 999px; font-size: 11px; font-weight: 600; margin-right: 4px; border: 1px solid var(--clay-border-light, #eee9df); }
 .progress-container { width: 100%; height: 8px; background: var(--clay-border-light, #eee9df); border-radius: 4px; overflow: hidden; }
 .progress-bar { height: 100%; background: linear-gradient(90deg, var(--clay-ube, #43089f), var(--clay-ube-light, #c1b0ff)); transition: width 0.5s ease; }
 .data-text { font-family: 'Space Mono', monospace; color: var(--clay-text-secondary, #55534e); font-size: 13px; }
 .empty-state { padding: 60px; text-align: center; color: var(--clay-text-muted, #9f9b93); }
 .empty-icon { font-size: 48px; margin-bottom: 16px; }
-.zone-tag-rank { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border: 1px solid var(--clay-border-light, #eee9df); }
 </style>

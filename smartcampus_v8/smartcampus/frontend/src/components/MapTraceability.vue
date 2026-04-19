@@ -110,7 +110,7 @@
                   </div>
                   <button
                     v-if="activeDotDetail"
-                    class="panel-action"
+                    class="panel-action ui-action-btn ui-action-btn--accent"
                     type="button"
                     @click="openIpDetail(activeDotDetail.srcIp)"
                   >
@@ -137,7 +137,7 @@
                     <div class="detail-item">
                       <span class="detail-label">来源 IP</span>
                       <button
-                        class="detail-ip-link mono"
+                        class="detail-ip-link ui-ip-link mono"
                         type="button"
                         @click="openIpDetail(activeDotDetail.srcIp)"
                       >
@@ -167,10 +167,10 @@
                   </div>
 
                   <div class="detail-actions">
-                    <button class="detail-action-btn primary" type="button" @click="openIpDetail(activeDotDetail.srcIp)">
+                    <button class="detail-action-btn primary ui-action-btn ui-action-btn--accent" type="button" @click="openIpDetail(activeDotDetail.srcIp)">
                       跳转独立画像
                     </button>
-                    <button class="detail-action-btn" type="button" @click="focusDotInMap(activeDotDetail)">
+                    <button class="detail-action-btn ui-action-btn" type="button" @click="focusDotInMap(activeDotDetail)">
                       定位当前点
                     </button>
                   </div>
@@ -870,23 +870,6 @@ export default {
   font-weight: 600;
 }
 
-.panel-action {
-  border: 1px solid rgba(67, 8, 159, 0.16);
-  background: rgba(243, 238, 255, 0.92);
-  color: var(--clay-ube, #43089f);
-  border-radius: 999px;
-  padding: 8px 14px;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.panel-action:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(67, 8, 159, 0.12);
-}
-
 .detail-card {
   border-radius: 18px;
   padding: 18px;
@@ -1008,50 +991,10 @@ export default {
   font-size: 13px;
 }
 
-.detail-ip-link {
-  width: fit-content;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--clay-ube, #43089f);
-  font-weight: 700;
-  cursor: pointer;
-  text-align: left;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-
-.detail-ip-link:hover {
-  color: #2f0a70;
-  transform: translateY(-1px);
-}
-
 .detail-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-}
-
-.detail-action-btn {
-  border: 1px solid rgba(218,212,200,0.6);
-  background: rgba(255,255,255,0.88);
-  color: #55534e;
-  border-radius: 999px;
-  padding: 9px 14px;
-  font-size: 12px;
-  font-weight: 800;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.detail-action-btn.primary {
-  background: rgba(243, 238, 255, 0.92);
-  color: var(--clay-ube, #43089f);
-  border-color: rgba(67, 8, 159, 0.14);
-}
-
-.detail-action-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(0,0,0,0.08);
 }
 
 .detail-empty {

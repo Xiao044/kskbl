@@ -4,7 +4,7 @@
       <div class="content-card clay-card flex-1">
         <div class="chart-header">
           <h3 class="section-title">大流吞吐量瞬时切片</h3>
-          <div class="metric-toggle">
+          <div class="ui-metric-toggle">
             <button :class="{ active: metricMode === 'bytes' }" @click="setMetricMode('bytes')">Bytes</button>
             <button :class="{ active: metricMode === 'packets' }" @click="setMetricMode('packets')">Packets</button>
           </div>
@@ -14,7 +14,7 @@
       <div class="content-card clay-card flex-1">
         <div class="chart-header">
           <h3 class="section-title">瞬时应用协议分布</h3>
-          <div class="metric-toggle">
+          <div class="ui-metric-toggle">
             <button :class="{ active: metricMode === 'bytes' }" @click="setMetricMode('bytes')">Bytes</button>
             <button :class="{ active: metricMode === 'packets' }" @click="setMetricMode('packets')">Packets</button>
           </div>
@@ -29,8 +29,8 @@
         <div class="live-pill"><span class="pulse-dot"></span> LIVE</div>
       </div>
       
-      <div class="table-scroll-area">
-        <table>
+      <div class="table-scroll-area ui-table-scroll">
+        <table class="ui-data-table">
           <thead>
             <tr>
               <th>源 IP (发起方)</th>
@@ -44,7 +44,7 @@
           <tbody>
             <tr v-for="(item, index) in flow" :key="index">
               <td class="ip-src">{{ item.src_ip }}</td>
-              <td><span :class="['zone-tag', isExternal(item.src_zone) ? 'ext' : 'int']">{{ item.src_zone || '--' }}</span></td>
+              <td><span :class="['zone-tag', 'ui-pill-tag', isExternal(item.src_zone) ? 'ext' : 'int']">{{ item.src_zone || '--' }}</span></td>
               <td>
                 <div class="ip-dst">
                   <span :class="['status-dot', isInternalIP(item.dst_ip) ? 'safe' : 'warn']"></span>
@@ -264,9 +264,6 @@ export default {
 .flex-between { display: flex; justify-content: space-between; align-items: center; }
 .section-title { margin: 0; color: #000000; font-size: 18px; font-weight: 600; letter-spacing: -0.36px; }
 .chart-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
-.metric-toggle { display: inline-flex; gap: 6px; background: rgba(255,255,255,0.72); border-radius: 999px; padding: 4px; }
-.metric-toggle button { border: none; background: transparent; color: #55534e; border-radius: 999px; padding: 6px 10px; font-size: 11px; font-weight: 800; cursor: pointer; }
-.metric-toggle button.active { background: rgba(243,238,255,0.92); color: var(--clay-ube, #43089f); }
 .charts-row { display: flex; gap: 24px; height: 320px; flex-shrink: 0; }
 .flex-1 { flex: 1; }
 .echarts-inner { width: 100%; height: 100%; flex: 1; }

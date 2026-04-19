@@ -32,8 +32,8 @@
         <h3 class="section-title">实时安全告警日志 (SecLog)</h3>
       </div>
 
-      <div class="table-scroll-area">
-        <table>
+      <div class="table-scroll-area ui-table-scroll">
+        <table class="ui-data-table">
           <thead>
             <tr>
               <th>时间</th>
@@ -56,17 +56,17 @@
                 <span v-if="item.count > 1" class="count-badge" :title="`累计攻击 ${item.count} 次`">x{{ item.count }}</span>
               </td>
               <td class="ip-text">
-                <button class="ip-link" type="button" @click="$emit('view-ip', item.src_ip)">{{ item.src_ip }}</button>
+                <button class="ip-link ui-ip-link" type="button" @click="$emit('view-ip', item.src_ip)">{{ item.src_ip }}</button>
               </td>
-              <td><span class="zone-tag-alert">{{ item.src_zone || '外部网络' }}</span></td>
+              <td><span class="zone-tag-alert ui-pill-tag ui-pill-tag--red">{{ item.src_zone || '外部网络' }}</span></td>
               <td><span class="geo-tag">{{ formatGeo(item.geo) }}</span></td>
               <td class="ip-dst-text">
-                <button class="ip-link" type="button" @click="$emit('view-ip', item.dst_ip || 'N/A')">{{ item.dst_ip || 'N/A' }}</button>
+                <button class="ip-link ui-ip-link" type="button" @click="$emit('view-ip', item.dst_ip || 'N/A')">{{ item.dst_ip || 'N/A' }}</button>
               </td>
               <td class="bytes-text">{{ item.bytes ? formatBytes(item.bytes) : '--' }}</td>
               <td class="packets-text">{{ item.packets || '--' }}</td>
               <td>
-                <span :class="['level-badge', item.level]">
+                <span :class="['level-badge', 'ui-level-badge', item.level === 'high' ? 'ui-level-badge--high' : 'ui-level-badge--medium', item.level]">
                   {{ item.level === 'high' ? '高危' : (item.level === 'medium' ? '中危' : '低危') }}
                 </span>
               </td>
@@ -275,19 +275,6 @@ tr:hover td { background: var(--clay-bg, #faf9f7); }
 .time-text { color: var(--clay-text-muted, #9f9b93); font-family: 'Space Mono', monospace; font-size: 13px; }
 .threat-text { font-weight: 600; color: #000000; }
 .ip-text { font-family: 'Space Mono', monospace; font-weight: 600; color: var(--clay-ube, #43089f); }
-.ip-link {
-  border: none;
-  background: transparent;
-  padding: 0;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-.ip-link:hover {
-  color: var(--clay-blueberry, #01418d);
-  transform: translateY(-1px);
-}
 .count-badge {
   display: inline-flex;
   align-items: center;
@@ -304,16 +291,11 @@ tr:hover td { background: var(--clay-bg, #faf9f7); }
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.45), 0 2px 0 rgba(92, 57, 170, 0.8);
 }
 
-.zone-tag-alert { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: var(--clay-pomegranate-bg, #fff0f1); color: var(--clay-pomegranate, #fc7981); border: 1px solid rgba(252, 121, 129, 0.2); }
 .geo-tag { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border: 1px solid rgba(1, 65, 141, 0.15); }
 
 .ip-dst-text { font-family: 'Space Mono', monospace; color: var(--clay-text-secondary, #55534e); font-size: 13px; }
 .bytes-text { font-family: 'Space Mono', monospace; color: #000000; font-weight: 600; font-size: 13px; }
 .packets-text { font-family: 'Space Mono', monospace; color: var(--clay-text-secondary, #55534e); font-size: 13px; }
-
-.level-badge { padding: 4px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; text-align: center; display: inline-block; }
-.level-badge.high { background: #fef2f2; color: var(--clay-pomegranate, #fc7981); border: 1px solid rgba(252, 121, 129, 0.3); }
-.level-badge.medium { background: #fef3c7; color: var(--clay-lemon, #d08a11); border: 1px solid rgba(251, 189, 65, 0.3); }
 
 .action-text { display: flex; align-items: center; gap: 6px; color: var(--clay-text-muted, #9f9b93); font-size: 13px; }
 .dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }

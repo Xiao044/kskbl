@@ -32,7 +32,7 @@
           <option value="danger">安全告警</option>
         </select>
 
-        <button class="btn-export" @click="clearHistory">
+        <button class="btn-export ui-action-btn ui-action-btn--danger" @click="clearHistory">
           <span class="icon">🗑️</span> 清空记录
         </button>
       </div>
@@ -44,8 +44,8 @@
         <span class="count">当前已捕获 {{ filteredLogs.length }} 条记录 (最大缓存 1000 条)</span>
       </div>
 
-      <div class="table-wrapper">
-        <table v-if="filteredLogs.length > 0">
+      <div class="table-wrapper ui-table-scroll">
+        <table v-if="filteredLogs.length > 0" class="ui-data-table">
           <thead>
             <tr>
               <th>捕获时间</th>
@@ -62,18 +62,18 @@
               <td class="time-col">{{ log.time }}</td>
               <td>
                 <div class="path-col">
-                  <button class="ip ip-link" type="button" @click="$emit('view-ip', log.src_ip)">{{ log.src_ip }}</button>
+                  <button class="ip ip-link ui-ip-link" type="button" @click="$emit('view-ip', log.src_ip)">{{ log.src_ip }}</button>
                   <span v-if="log.count > 1" class="count-badge" :title="`累计攻击 ${log.count} 次`">x{{ log.count }}</span>
                   <span class="arrow">➔</span>
-                  <button class="ip ip-link" type="button" @click="$emit('view-ip', log.dst_ip)">{{ log.dst_ip }}</button>
+                  <button class="ip ip-link ui-ip-link" type="button" @click="$emit('view-ip', log.dst_ip)">{{ log.dst_ip }}</button>
                 </div>
               </td>
-              <td><span class="zone-tag-hist">{{ log.src_zone || '--' }}</span></td>
+              <td><span class="zone-tag-hist ui-pill-tag ui-pill-tag--blue">{{ log.src_zone || '--' }}</span></td>
               <td><span class="proto-tag">{{ log.proto }}</span></td>
               <td class="data-col">{{ log.size }}</td>
               <td>
-                <span :class="['status-badge', log.level]">
-                  <span class="status-dot"></span>
+                <span :class="['status-badge', 'ui-status-badge', `ui-status-badge--${log.level}` , log.level]">
+                  <span class="status-dot ui-status-badge__dot"></span>
                   <span class="status-label">{{ log.status }}</span>
                 </span>
               </td>
@@ -293,36 +293,18 @@ select { padding: 8px 16px; border-radius: 12px; border: 1px solid var(--glass-b
 select:focus { border-color: rgba(67, 8, 159, 0.3); box-shadow: 0 0 0 3px rgba(193, 176, 255, 0.22); }
 
 /* Clay 标志性 Hover 按钮 */
-.btn-export { padding: 8px 20px; background: rgba(255,255,255,0.6); color: var(--clay-pomegranate, #fc7981); border: 1px solid var(--glass-border, rgba(218,212,200,0.4)); border-radius: 12px; font-weight: 600; cursor: pointer; transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); font-family: var(--clay-font, 'Roobert', 'Arial', sans-serif); }
-.btn-export:hover { transform: rotateZ(-8deg) translateY(-2px); box-shadow: rgb(0,0,0) -7px 7px; background-color: var(--clay-lemon, #fbbd41); color: #ffffff; border-color: var(--clay-lemon, #fbbd41); }
-
 .table-card { background: var(--glass-bg, rgba(255,255,255,0.55)); backdrop-filter: var(--glass-blur, blur(12px)); -webkit-backdrop-filter: var(--glass-blur, blur(12px)); border-radius: 24px; flex: 1; display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--glass-border, rgba(218,212,200,0.4)); box-shadow: var(--glass-shadow, 0 4px 24px rgba(0,0,0,0.04)); min-height: 0; transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
 .table-card:hover { transform: translateY(-2px); box-shadow: var(--glass-shadow, 0 4px 24px rgba(0,0,0,0.04)), 0 12px 28px rgba(0,0,0,0.08); }
 .table-header { padding: 20px; border-bottom: 1px dashed var(--clay-border, #dad4c8); display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; }
 .title { margin: 0; font-size: 18px; color: #000000; font-weight: 600; letter-spacing: -0.36px; }
 .count { font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; }
 
-.table-wrapper { flex: 1; overflow-y: auto; }
-table { width: 100%; border-collapse: collapse; table-layout: auto; }
-th { background: rgba(250, 249, 247, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); text-align: left; padding: 15px 20px; font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); position: sticky; top: 0; z-index: 10; box-sizing: border-box; background-clip: padding-box; }
-td { padding: 15px 20px; border-bottom: 1px solid var(--clay-border-light, #eee9df); font-size: 14px; color: #000000; vertical-align: middle; box-sizing: border-box; background-clip: padding-box; }
-
+.table-wrapper {}
+.ui-data-table th { background: rgba(250, 249, 247, 0.8); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); padding: 15px 20px; font-size: 13px; color: var(--clay-text-muted, #9f9b93); font-weight: 600; border-bottom: 1px solid var(--clay-border, #dad4c8); }
+.ui-data-table td { padding: 15px 20px; border-bottom: 1px solid var(--clay-border-light, #eee9df); font-size: 14px; color: #000000; }
 .time-col { color: var(--clay-text-muted, #9f9b93); font-family: 'Space Mono', monospace; font-size: 13px; }
 .path-col { display: flex; align-items: center; gap: 10px; font-weight: 600; min-width: 0; }
 .ip { font-family: 'Space Mono', monospace; }
-.ip-link {
-  border: none;
-  background: transparent;
-  padding: 0;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  transition: color 0.2s ease, transform 0.2s ease;
-}
-.ip-link:hover {
-  color: var(--clay-ube, #43089f);
-  transform: translateY(-1px);
-}
 .arrow { color: var(--clay-border, #dad4c8); }
 .proto-tag { padding: 4px 10px; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border-radius: 999px; font-size: 12px; font-weight: 700; border: 1px solid var(--clay-border-light, #eee9df); }
 .data-col { font-family: 'Space Mono', monospace; color: var(--clay-text-secondary, #55534e); font-size: 13px; }
@@ -342,57 +324,10 @@ td { padding: 15px 20px; border-bottom: 1px solid var(--clay-border-light, #eee9
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.35), 0 2px 0 rgba(180, 46, 63, 0.9);
 }
 
-.status-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  min-height: 28px;
-  padding: 4px 12px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  white-space: nowrap;
-  border: 1px solid transparent;
-}
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  display: inline-block;
-  flex-shrink: 0;
-}
 .status-label {
   position: relative;
   z-index: 1;
 }
-.status-badge.normal {
-  background: rgba(7, 138, 82, 0.12);
-  color: var(--clay-matcha, #078a52);
-  border-color: rgba(7, 138, 82, 0.18);
-}
-.status-badge.normal .status-dot {
-  background: var(--clay-matcha, #078a52);
-}
-.status-badge.warning {
-  background: rgba(251, 189, 65, 0.16);
-  color: #b77900;
-  border-color: rgba(251, 189, 65, 0.22);
-}
-.status-badge.warning .status-dot {
-  background: var(--clay-lemon, #fbbd41);
-}
-.status-badge.danger {
-  background: rgba(252, 121, 129, 0.14);
-  color: #c84d5e;
-  border-color: rgba(252, 121, 129, 0.2);
-}
-.status-badge.danger .status-dot {
-  background: var(--clay-pomegranate, #fc7981);
-}
-
-.zone-tag-hist { display: inline-block; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 600; background: #f0f8ff; color: var(--clay-blueberry, #01418d); border: 1px solid var(--clay-border-light, #eee9df); }
-
 .empty-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--clay-text-muted, #9f9b93); }
 .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.5; }
 
