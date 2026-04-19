@@ -170,6 +170,10 @@
 export default {
   name: 'Chat',
   emits: ['chat-focus', 'chat-blur', 'message-sent', 'focus-ip-history', 'focus-zone-history', 'view-ip'],
+  props: {
+    prefillMessage: { type: String, default: '' },
+    prefillToken: { type: Number, default: 0 }
+  },
   data() {
     return {
       ws: null,
@@ -188,12 +192,20 @@ export default {
       ]
     }
   },
+  watch: {
+    prefillToken() {
+      this.applyPrefillMessage();
+    }
+  },
   computed: {
     statusText() {
       return this.isAiTyping ? this.pendingStatusLabel : '在线分析中';
     }
   },
-  mounted() { this.connectChatWS(); },
+  mounted() {
+    this.connectChatWS();
+    this.applyPrefillMessage();
+  },
   beforeUnmount() { if (this.ws) this.ws.close(); },
   methods: {
     messageSenderName(msg) {
@@ -281,10 +293,21 @@ export default {
       if (/(ip|源地址|历史记录|history)/.test(normalized)) return 'AI 正在检索目标 IP 历史...';
       return 'AI 正在分析当前态势...';
     },
+    applyPrefillMessage() {
+      const message = String(this.prefillMessage || '').trim();
+      if (!message) return;
+      this.inputText = message;
+      this.$nextTick(() => {
+        this.sendMessage();
+      });
+    },
     connectChatWS() {
       const serverIp = window.location.hostname;
       this.ws = new WebSocket(`ws://${serverIp}:8000/ws/chat`);
 
+      this.ws.onopen = () => {
+        this.applyPrefillMessage();
+      };
       this.ws.onmessage = (event) => {
         const data = JSON.parse(event.data);
         this.messages.push({
@@ -297,7 +320,7 @@ export default {
       this.ws.onclose = () => { setTimeout(() => this.connectChatWS(), 3000); };
     },
     sendMessage() {
-      if (!this.inputText.trim() || !this.ws) return;
+      if (!this.inputText.trim() || !this.ws || this.ws.readyState !== WebSocket.OPEN) return;
       this.pendingStatusLabel = this.inferPendingStatus(this.inputText);
       const newMsg = {
         id: Date.now().toString(),

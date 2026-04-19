@@ -103,6 +103,7 @@
               @view-ip="openIpDetail"
               @back="closeIpDetail"
               @view-history="openHistoryForIp"
+              @analyze-ip="askAiToAnalyzeIp"
             />
           </div>
         </div>
@@ -119,6 +120,8 @@
         </div>
         <div class="chat-drawer__panel">
           <Chat
+            :prefill-message="chatPrefillMessage"
+            :prefill-token="chatPrefillToken"
             @chat-focus="onChatFocus"
             @chat-blur="onChatBlur"
             @message-sent="onMessageSent"
@@ -172,6 +175,8 @@ export default {
       historyFocusToken: 0,
       selectedIp: '',
       previousView: 'Dashboard',
+      chatPrefillMessage: '',
+      chatPrefillToken: 0,
       currentTime: new Date().toLocaleTimeString(),
       clockTimer: null,
       nextAlertId: 1
@@ -255,6 +260,17 @@ export default {
     onChatFocus() { this.chatFocused = true; },
     onChatBlur() { this.chatFocused = false; },
     onMessageSent() { this.chatFocused = false; },
+    askAiToAnalyzeIp(ip) {
+      if (!ip || typeof ip !== 'string') return;
+      const normalizedIp = ip.trim();
+      if (!normalizedIp) return;
+
+      this.selectedIp = normalizedIp;
+      this.openChatDrawer();
+      this.chatFocused = false;
+      this.chatPrefillMessage = `请结合当前系统快照、最新告警、top talker、异常区域以及该 IP 的历史记录，对 IP ${normalizedIp} 做一次独立安全分析，先给结论，再给依据和建议。`;
+      this.chatPrefillToken += 1;
+    },
     openIpDetail(ip) {
       if (!ip || typeof ip !== 'string') return;
       const normalizedIp = ip.trim();
